@@ -1,0 +1,90 @@
+server:
+  port: 8088
+
+---
+
+spring:
+  profiles: default
+  cloud:
+    gateway:
+      routes:
+        - id: rental
+          uri: http://localhost:8081
+          predicates:
+            - Path=/rentals/** 
+        - id: repair
+          uri: http://localhost:8082
+          predicates:
+            - Path=/repairs/** 
+        - id: store
+          uri: http://localhost:8083
+          predicates:
+            - Path=/stores/** 
+        - id: view
+          uri: http://localhost:8084
+          predicates:
+            - Path= 
+        - id: payment
+          uri: http://localhost:8085
+          predicates:
+            - Path=/payments/** 
+        - id: frontend
+          uri: http://localhost:8080
+          predicates:
+            - Path=/**
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins:
+              - "*"
+            allowedMethods:
+              - "*"
+            allowedHeaders:
+              - "*"
+            allowCredentials: true
+
+
+---
+
+spring:
+  profiles: docker
+  cloud:
+    gateway:
+      routes:
+        - id: rental
+          uri: http://rental:8080
+          predicates:
+            - Path=/rentals/** 
+        - id: repair
+          uri: http://repair:8080
+          predicates:
+            - Path=/repairs/** 
+        - id: store
+          uri: http://store:8080
+          predicates:
+            - Path=/stores/** 
+        - id: view
+          uri: http://view:8080
+          predicates:
+            - Path= 
+        - id: payment
+          uri: http://payment:8080
+          predicates:
+            - Path=/payments/** 
+        - id: frontend
+          uri: http://frontend:8080
+          predicates:
+            - Path=/**
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins:
+              - "*"
+            allowedMethods:
+              - "*"
+            allowedHeaders:
+              - "*"
+            allowCredentials: true
+
+server:
+  port: 8080
