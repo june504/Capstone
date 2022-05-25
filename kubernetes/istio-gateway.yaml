@@ -25,7 +25,7 @@ spec:
   http:
   - match:
     - uri:
-        prefix: /rental
+        prefix: /rentals
     rewrite:
       uri: /
     route:
@@ -35,7 +35,7 @@ spec:
           number: 8080
   - match:
     - uri:
-        prefix: /store
+        prefix: /stores
     rewrite:
       uri: /
     route:
@@ -45,7 +45,7 @@ spec:
           number: 8080
   - match:
     - uri:
-        prefix: /repair
+        prefix: /repairs
     rewrite:
       uri: /
     route:
@@ -55,7 +55,7 @@ spec:
           number: 8080
   - match:
     - uri:
-        prefix: /payment
+        prefix: /payments
     rewrite:
       uri: /
     route:
@@ -65,7 +65,7 @@ spec:
           number: 8080
   - match:
     - uri:
-        prefix: /view
+        prefix: /toyLists
     rewrite:
       uri: /
     route:
