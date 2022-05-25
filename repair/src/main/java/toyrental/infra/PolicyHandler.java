@@ -16,7 +16,8 @@ import toyrental.domain.*;
 
 @Service
 public class PolicyHandler{
-    @Autowired RepairRepository repairRepository;
+    @Autowired
+    RepairRepository repairRepository;
     
     @StreamListener(KafkaProcessor.INPUT)
     public void whatever(@Payload String eventString){}
@@ -25,13 +26,9 @@ public class PolicyHandler{
     public void wheneverRepairRequested_RequestRepair(@Payload RepairRequested repairRequested){
 
         if(!repairRequested.validate()) return;
-        RepairRequested event = repairRequested;
         System.out.println("\n\n##### listener RequestRepair : " + repairRequested.toJson() + "\n\n");
-
-
         
-
-        // Sample Logic //
+        RepairRequested event = repairRequested;
         Repair.requestRepair(event);
         
 

@@ -10,7 +10,7 @@ public class Registered extends AbstractEvent {
 
     private Integer toyId;
     private String name;
-    private Long toyRentalPrice;
+    private Integer toyRentalPrice;
     private String toyStatus;
     private String rentalId;
 

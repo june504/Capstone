@@ -5,14 +5,12 @@ import toyrental.infra.AbstractEvent;
 import lombok.Data;
 import java.util.Date;
 @Data
-public class Paid extends AbstractEvent {
+public class ToyReturned extends AbstractEvent {
 
-    private Integer payId;
     private Integer rentalId;
-    private String payStatus;
-    private Integer toyRentalPrice;
-    
+    private Integer customerId;
     private Integer toyId;
+    private String rentalStatus;
 
 }
 

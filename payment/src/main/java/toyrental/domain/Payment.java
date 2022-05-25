@@ -8,6 +8,8 @@ import org.springframework.beans.BeanUtils;
 import java.util.List;
 import lombok.Data;
 import java.util.Date;
+import java.util.Optional;
+
 
 @Entity
 @Table(name="Payment_table")
@@ -26,9 +28,12 @@ public class Payment  {
     
     
     private String payStatus;
+
+    
+    private Integer toyId;
     
     
-    private Integer toyRentalPrice;
+    private Integer toyRentalPrice = 10000;
 
     @PostPersist
     public void onPostPersist(){
@@ -39,9 +44,7 @@ public class Payment  {
     }
     @PostUpdate
     public void onPostUpdate(){
-        PayCancelled payCancelled = new PayCancelled();
-        BeanUtils.copyProperties(this, payCancelled);
-        payCancelled.publishAfterCommit();
+        
 
     }
 
@@ -51,14 +54,36 @@ public class Payment  {
         return paymentRepository;
     }
 
+    public void payCancel(){
+        setPayStatus("cencel");
+    }
 
     public static void payCancel(RentalCancelled rentalCancelled){
+        try{
+            Integer rentalId = rentalCancelled.getRentalId();
+            Optional<Payment> optionalRental = repository().findByRentalId(rentalId);
+            optionalRental.orElseThrow(()-> new Exception("No Entity Found"));
+            Payment payment = optionalRental.get();
 
-        Payment payment = new Payment();
+            payment.setPayStatus("cencel");
+            repository().save(payment);
+        
+            PayCancelled payCancelled = new PayCancelled();
+            //BeanUtils.copyProperties(this, payCancelled);
+            payCancelled.setPayId(payment.getPayId());
+            payCancelled.setToyRentalPrice(payment.getToyRentalPrice());
+            payCancelled.setRentalId(rentalCancelled.getRentalId());
+            payCancelled.setPayStatus("cencel");
+            
+            payCancelled.publish();
+
+        }catch(Exception e){
+            throw new RuntimeException(e);
+        }
+        
         /*
         LOGIC GOES HERE
         */
-        // repository().save(payment);
 
         // PayCancelled payCancelled = new PayCancelled();
         /*

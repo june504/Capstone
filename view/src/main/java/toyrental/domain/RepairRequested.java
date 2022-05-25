@@ -5,15 +5,9 @@ import lombok.Data;
 import java.util.Date;
 
 @Data
-public class Registered extends AbstractEvent {
+public class RepairRequested extends AbstractEvent {
 
     private Integer toyId;
     private String name;
-    private Integer toyRentalPrice;
     private String toyStatus;
-    private String rentalId;
-
-    public Registered(){
-        super();
-    }
 }

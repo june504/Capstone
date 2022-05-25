@@ -19,13 +19,13 @@ import javax.transaction.Transactional;
         RepairRepository repairRepository;
 
 
-        @RequestMapping(value = "/{id}/discard",
+        @RequestMapping(value = "/{repairId}/discard",
                 method = RequestMethod.PUT,
                 produces = "application/json;charset=UTF-8")
-        public Repair discard(@PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response)
+        public Repair discard(@PathVariable(value = "repairId") Integer repairId, HttpServletRequest request, HttpServletResponse response)
                 throws Exception {
                         System.out.println("##### /repair/discard  called #####");
-                        Optional<Repair> optionalRepair = repairRepository.findById(id);
+                        Optional<Repair> optionalRepair = repairRepository.findById(repairId);
                         
                         optionalRepair.orElseThrow(()-> new Exception("No Entity Found"));
                         Repair repair = optionalRepair.get();
@@ -39,13 +39,13 @@ import javax.transaction.Transactional;
         
 
 
-        @RequestMapping(value = "/{id}/repair",
+        @RequestMapping(value = "/{repairId}/repair",
                 method = RequestMethod.PUT,
                 produces = "application/json;charset=UTF-8")
-        public Repair repair(@PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response)
+        public Repair repair(@PathVariable(value = "repairId") Integer repairId, HttpServletRequest request, HttpServletResponse response)
                 throws Exception {
                         System.out.println("##### /repair/repair  called #####");
-                        Optional<Repair> optionalRepair = repairRepository.findById(id);
+                        Optional<Repair> optionalRepair = repairRepository.findById(repairId);
                         
                         optionalRepair.orElseThrow(()-> new Exception("No Entity Found"));
                         Repair repair = optionalRepair.get();

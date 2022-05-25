@@ -28,7 +28,7 @@ public class PolicyHandler{
         Paid event = paid;
         System.out.println("\n\n##### listener RentalConfirm : " + paid.toJson() + "\n\n");
 
-
+        
         
 
         // Sample Logic //
@@ -43,8 +43,9 @@ public class PolicyHandler{
     public void wheneverPayCancelled_RentalCancel(@Payload PayCancelled payCancelled){
 
         if(!payCancelled.validate()) return;
-        PayCancelled event = payCancelled;
         System.out.println("\n\n##### listener RentalCancel : " + payCancelled.toJson() + "\n\n");
+
+        PayCancelled event = payCancelled;
 
 
         

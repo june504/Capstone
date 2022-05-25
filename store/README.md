@@ -6,6 +6,31 @@
 mvn spring-boot:run
 ```
 
+### kafka 이벤트큐 확인
+/usr/local/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic toyrental --from-beginning
+
+## Testing
+
+0. 서비스 조회
+http http://localhost:8083/stores
+
+1. 장난감 등록
+http POST localhost:8083/stores/ name="뽀로로 인형" toyRentalPrice=2000 toyStatus="AVAILABLE"
+http POST localhost:8083/stores/ name="코코몽 인형" toyRentalPrice=3500 toyStatus="AVAILABLE"
+http POST localhost:8083/stores/ name="타요버스" toyRentalPrice=5000 toyStatus="AVAILABLE"
+
+2. 대여확인
+http PUT localhost:8083/stores/1/accept
+
+3. 반납처리
+http PUT localhost:8083/stores/2/returnconfirm
+
+4. 수리요청
+http PUT localhost:8083/stores/3/repairrequest
+
+
+
+
 ## Packaging and Running in docker environment
 
 ```

@@ -18,4 +18,21 @@ import javax.transaction.Transactional;
         @Autowired
         PaymentRepository paymentRepository;
 
+        @RequestMapping(value = "/{id}/paycancel",
+         method = RequestMethod.PUT,
+          produces = "application/json;charset=UTF-8")
+        public Payment payCancel(@PathVariable(value = "id") Integer id, HttpServletRequest request, HttpServletResponse response)
+        throws Exception {
+                System.out.println("##### /payment/payCancel  called #####");
+                Optional<Payment> optionalPayment = paymentRepository.findById(id);
+                
+                optionalPayment.orElseThrow(()-> new Exception("No Entity Found"));
+                Payment payment = optionalPayment.get();
+                payment.payCancel();
+                
+                paymentRepository.save(payment);
+                return payment;
+                
+        }
+
  }

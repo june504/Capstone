@@ -11,12 +11,14 @@ import lombok.Data;
 public class ToyList {
 
         @Id
-        @GeneratedValue(strategy=GenerationType.AUTO)
-        private Long id;
+        //@GeneratedValue(strategy=GenerationType.AUTO)
+        private Integer toyId;
         private String name;
         private Integer rentalId;
-        private String status;
+        private String toyStatus;
+        private Integer toyRentalPrice;  
         private String repairmanId;
+        private Integer repairId;
 
 
 }

@@ -37,6 +37,9 @@ logging:
     org.hibernate.type: trace
     org.springframework.cloud: debug
 
+api:
+  path:
+    store: localhost:8083
 
 server:
   port: 8083

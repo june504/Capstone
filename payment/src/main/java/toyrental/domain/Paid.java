@@ -12,8 +12,9 @@ public class Paid extends AbstractEvent {
     private Integer rentalId;
     private String payStatus;
     private Integer toyRentalPrice;
+    private Integer toyId;
 
     public Paid(){
         super();
-    }
+    } 
 }

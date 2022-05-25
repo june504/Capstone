@@ -39,7 +39,7 @@ logging:
 
 api:
   path:
-    payment: localhost:8080
+    payment: localhost:8085
 
 server:
   port: 8081

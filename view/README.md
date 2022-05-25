@@ -1,9 +1,16 @@
+
+
 # view
 
 ## Running in local development environment
 
 ```
 mvn spring-boot:run
+```
+
+## 뷰모델 조회
+```
+http localhost:8084/toyLists
 ```
 
 ## Packaging and Running in docker environment

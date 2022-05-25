@@ -9,7 +9,7 @@ import lombok.Data;
 public class ReturnConfirmed extends AbstractEvent {
 
     private Integer toyId;
-    private Integer rentalId;
+    private String rentalId;
     private String name;
     private String toyStatus;
     private Integer toyRentalPrice;

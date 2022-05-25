@@ -20,13 +20,13 @@ import javax.transaction.Transactional;
 
 
 
-        @RequestMapping(value = "/{id}/repairrequest",
+        @RequestMapping(value = "/{toyId}/repairrequest",
                 method = RequestMethod.PUT,
                 produces = "application/json;charset=UTF-8")
-        public Store repairRequest(@PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response)
+        public Store repairRequest(@PathVariable(value = "toyId") Integer toyId, HttpServletRequest request, HttpServletResponse response)
                 throws Exception {
                         System.out.println("##### /store/repairRequest  called #####");
-                        Optional<Store> optionalStore = storeRepository.findById(id);
+                        Optional<Store> optionalStore = storeRepository.findById(toyId);
                         
                         optionalStore.orElseThrow(()-> new Exception("No Entity Found"));
                         Store store = optionalStore.get();
@@ -40,13 +40,13 @@ import javax.transaction.Transactional;
         
 
 
-        @RequestMapping(value = "/{id}/accept",
+        @RequestMapping(value = "/{toyId}/accept",
                 method = RequestMethod.PUT,
                 produces = "application/json;charset=UTF-8")
-        public Store accept(@PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response)
+        public Store accept(@PathVariable(value = "toyId") Integer toyId, HttpServletRequest request, HttpServletResponse response)
                 throws Exception {
                         System.out.println("##### /store/accept  called #####");
-                        Optional<Store> optionalStore = storeRepository.findById(id);
+                        Optional<Store> optionalStore = storeRepository.findById(toyId);
                         
                         optionalStore.orElseThrow(()-> new Exception("No Entity Found"));
                         Store store = optionalStore.get();
@@ -60,13 +60,13 @@ import javax.transaction.Transactional;
         
 
 
-        @RequestMapping(value = "/{id}/returnconfirm",
+        @RequestMapping(value = "/{toyId}/returnconfirm",
                 method = RequestMethod.PUT,
                 produces = "application/json;charset=UTF-8")
-        public Store returnConfirm(@PathVariable(value = "id") Long id, HttpServletRequest request, HttpServletResponse response)
+        public Store returnConfirm(@PathVariable(value = "toyId") Integer toyId, HttpServletRequest request, HttpServletResponse response)
                 throws Exception {
                         System.out.println("##### /store/returnConfirm  called #####");
-                        Optional<Store> optionalStore = storeRepository.findById(id);
+                        Optional<Store> optionalStore = storeRepository.findById(toyId);
                         
                         optionalStore.orElseThrow(()-> new Exception("No Entity Found"));
                         Store store = optionalStore.get();

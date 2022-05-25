@@ -9,6 +9,6 @@ public class Payment {
     private Integer rentalId;
     private String payStatus;
     private Integer toyRentalPrice;
-
-
+    private Integer toyId; 
+ 
 }

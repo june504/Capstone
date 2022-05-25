@@ -5,6 +5,17 @@
 ```
 mvn spring-boot:run
 ```
+## payment test
+```
+0. 페이 목록조회
+http GET localhost:8085/payments
+
+1. 페이 등록
+http POST localhost:8085/payments rentalId=1 toyRentalPrice=10000
+
+2. 페이 취소
+//직접적인 방법은 없고, rental에서 취소해야함
+````
 
 ## Packaging and Running in docker environment
 

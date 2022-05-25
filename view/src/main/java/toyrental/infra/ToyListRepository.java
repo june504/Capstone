@@ -6,7 +6,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
-public interface ToyListRepository extends CrudRepository<ToyList, Long> {
+public interface ToyListRepository extends CrudRepository<ToyList, Integer> {
 
 
 }

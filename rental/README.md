@@ -5,6 +5,35 @@
 ```
 mvn spring-boot:run
 ```
+##
+카프카 실행
+/usr/local/kafka/bin/kafka-topics.sh
+
+카프카 이벤트 보기
+/usr/local/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic toyrental --from-beginning
+
+## rental test
+```
+0. 렌탈 조회
+http GET localhost:8081/rentals
+
+1. 렌탈 하기
+#pay서비스 req, res 
+http POST localhost:8081/rentals rentalStatus="rent" customerId=1 toyId=1 
+
+#pay서비스 호출 없이
+#안 됨 http POST localhost:8081/rentals/rent rentalStatus=="rent" toyId=="1" customerId=="1"
+
+2. 렌탈 조회
+http GET localhost:8081/rentals/1
+
+3. 반납
+http PUT localhost:8081/rentals/1/return
+
+4. 취소
+http PUT localhost:8081/rentals/1/rentalcancel
+
+'''
 
 ## Packaging and Running in docker environment
 

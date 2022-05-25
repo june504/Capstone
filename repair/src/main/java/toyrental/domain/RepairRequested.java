@@ -11,5 +11,9 @@ public class RepairRequested extends AbstractEvent {
     private String name;
     private String toyStatus;
 
+
+    public RepairRequested(){
+        super();
+    }
 }
 

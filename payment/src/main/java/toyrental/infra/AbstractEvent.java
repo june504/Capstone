@@ -13,7 +13,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.util.MimeTypeUtils;
 
 public class AbstractEvent {
-
+ 
     String eventType;
     Long timestamp;
 
