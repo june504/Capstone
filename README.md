@@ -101,7 +101,7 @@
   ![image](https://user-images.githubusercontent.com/38757114/170179634-534f581a-dd40-496d-ab2f-5c1658a3cb50.png)
 
 ## TO-BE 조직 (Vertically-Aligned)
-  ![image](https://user-images.githubusercontent.com/38757114/170182196-4fbddd64-fb81-4584-bb3c-e0d5b966418b.png)
+  ![image](https://user-images.githubusercontent.com/38757114/170192290-f88d7d36-76e6-4abf-9879-5bad143d1661.png)
 
 
 ## Event Storming 결과
@@ -118,16 +118,16 @@
         - 주문시>메뉴카테고리선택됨, 주문시>메뉴검색됨 :  UI 의 이벤트이지, 업무적인 의미의 이벤트가 아니라서 제외
 
 ### 액터, 커맨드 부착하여 읽기 좋게
-![image](https://user-images.githubusercontent.com/487999/79683614-4ee30f80-8266-11ea-9a50-68cdff2dcc46.png)
+![image](https://user-images.githubusercontent.com/38757114/170195423-bb79358a-086c-492b-833a-f1ac17fc7798.png)
 
 ### 어그리게잇으로 묶기
-![image](https://user-images.githubusercontent.com/487999/79683618-52769680-8266-11ea-9c21-48d6812444ba.png)
+![image](https://user-images.githubusercontent.com/38757114/170196097-0d722c70-0ab8-4a6d-a112-00faaf9892bf.png)
 
     - app의 Order, store 의 주문처리, 결제의 결제이력은 그와 연결된 command 와 event 들에 의하여 트랜잭션이 유지되어야 하는 단위로 그들 끼리 묶어줌
 
 ### 바운디드 컨텍스트로 묶기
 
-![image](https://user-images.githubusercontent.com/487999/79683625-560a1d80-8266-11ea-9790-40d68a36d95d.png)
+![image](https://user-images.githubusercontent.com/38757114/170198108-63136510-0a13-4276-9d7c-be01a4086f10.png)
 
     - 도메인 서열 분리 
         - Core Domain:  app(front), store : 없어서는 안될 핵심 서비스이며, 연견 Up-time SLA 수준을 99.999% 목표, 배포주기는 app 의 경우 1주일 1회 미만, store 의 경우 1개월 1회 미만
@@ -136,15 +136,15 @@
 
 ### 폴리시 부착 (괄호는 수행주체, 폴리시 부착을 둘째단계에서 해놔도 상관 없음. 전체 연계가 초기에 드러남)
 
-![image](https://user-images.githubusercontent.com/487999/79683633-5aced180-8266-11ea-8f42-c769eb88dfb1.png)
+![image](https://user-images.githubusercontent.com/38757114/170200526-3fdc078c-7f08-4246-b79c-fa176f9a01b0.png)
 
 ### 폴리시의 이동과 컨텍스트 매핑 (점선은 Pub/Sub, 실선은 Req/Resp)
 
-![image](https://user-images.githubusercontent.com/487999/79683641-5f938580-8266-11ea-9fdb-4e80ff6642fe.png)
+![image](https://user-images.githubusercontent.com/38757114/170203600-9c87e6d5-34b5-4663-8b02-b84e88b03e68.png)
 
 ### 완성된 1차 모형
 
-![image](https://user-images.githubusercontent.com/487999/79683646-63bfa300-8266-11ea-9bc5-c0b650507ac8.png)
+![image](https://user-images.githubusercontent.com/38757114/170204418-6bdbd803-9ed0-4861-9daf-dd963c7789d9.png)
 
     - View Model 추가
 
