@@ -223,143 +223,29 @@
     python policy-handler.py 
 ```
 
-## DDD 의 적용
+## CQRS
 
-- 각 서비스내에 도출된 핵심 Aggregate Root 객체를 Entity 로 선언하였다: (예시는 pay 마이크로 서비스). 이때 가능한 현업에서 사용하는 언어 (유비쿼터스 랭귀지)를 그대로 사용하려고 노력했다. 하지만, 일부 구현에 있어서 영문이 아닌 경우는 실행이 불가능한 경우가 있기 때문에 계속 사용할 방법은 아닌것 같다. (Maven pom.xml, Kafka의 topic id, FeignClient 의 서비스 id 등은 한글로 식별자를 사용하는 경우 오류가 발생하는 것을 확인하였다)
-
+* (CQRS 내용 추가)
 ```
-package fooddelivery;
-
-import javax.persistence.*;
-import org.springframework.beans.BeanUtils;
-import java.util.List;
-
-@Entity
-@Table(name="결제이력_table")
-public class 결제이력 {
-
-    @Id
-    @GeneratedValue(strategy=GenerationType.AUTO)
-    private Long id;
-    private String orderId;
-    private Double 금액;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-    public String getOrderId() {
-        return orderId;
-    }
-
-    public void setOrderId(String orderId) {
-        this.orderId = orderId;
-    }
-    public Double get금액() {
-        return 금액;
-    }
-
-    public void set금액(Double 금액) {
-        this.금액 = 금액;
-    }
-
-}
-
-```
-- Entity Pattern 과 Repository Pattern 을 적용하여 JPA 를 통하여 다양한 데이터소스 유형 (RDB or NoSQL) 에 대한 별도의 처리가 없도록 데이터 접근 어댑터를 자동 생성하기 위하여 Spring Data REST 의 RestRepository 를 적용하였다
-```
-package fooddelivery;
-
-import org.springframework.data.repository.PagingAndSortingRepository;
-
-public interface 결제이력Repository extends PagingAndSortingRepository<결제이력, Long>{
-}
-```
-- 적용 후 REST API 의 테스트
-```
-# app 서비스의 주문처리
-http localhost:8081/orders item="통닭"
-
-# store 서비스의 배달처리
-http localhost:8083/주문처리s orderId=1
-
-# 주문 상태 확인
-http localhost:8081/orders/1
-
+(설정)
 ```
 
-
-## 폴리글랏 퍼시스턴스
-
-앱프런트 (app) 는 서비스 특성상 많은 사용자의 유입과 상품 정보의 다양한 콘텐츠를 저장해야 하는 특징으로 인해 RDB 보다는 Document DB / NoSQL 계열의 데이터베이스인 Mongo DB 를 사용하기로 하였다. 이를 위해 order 의 선언에는 @Entity 가 아닌 @Document 로 마킹되었으며, 별다른 작업없이 기존의 Entity Pattern 과 Repository Pattern 적용과 데이터베이스 제품의 설정 (application.yml) 만으로 MongoDB 에 부착시켰다
-
+- CQRS 테스트 내용 추가
 ```
-# Order.java
-
-package fooddelivery;
-
-@Document
-public class Order {
-
-    private String id; // mongo db 적용시엔 id 는 고정값으로 key가 자동 발급되는 필드기 때문에 @Id 나 @GeneratedValue 를 주지 않아도 된다.
-    private String item;
-    private Integer 수량;
-
-}
-
-
-# 주문Repository.java
-package fooddelivery;
-
-public interface 주문Repository extends JpaRepository<Order, UUID>{
-}
-
-# application.yml
-
-  data:
-    mongodb:
-      host: mongodb.default.svc.cluster.local
-    database: mongo-example
-
+(테스트 절차 및 결과)
 ```
 
-## 폴리글랏 프로그래밍
+## Correlation
 
-고객관리 서비스(customer)의 시나리오인 주문상태, 배달상태 변경에 따라 고객에게 카톡메시지 보내는 기능의 구현 파트는 해당 팀이 python 을 이용하여 구현하기로 하였다. 해당 파이썬 구현체는 각 이벤트를 수신하여 처리하는 Kafka consumer 로 구현되었고 코드는 다음과 같다:
+* (Correlation 내용 추가)
 ```
-from flask import Flask
-from redis import Redis, RedisError
-from kafka import KafkaConsumer
-import os
-import socket
-
-
-# To consume latest messages and auto-commit offsets
-consumer = KafkaConsumer('fooddelivery',
-                         group_id='',
-                         bootstrap_servers=['localhost:9092'])
-for message in consumer:
-    print ("%s:%d:%d: key=%s value=%s" % (message.topic, message.partition,
-                                          message.offset, message.key,
-                                          message.value))
-
-    # 카톡호출 API
+(설정)
 ```
 
-파이선 애플리케이션을 컴파일하고 실행하기 위한 도커파일은 아래와 같다 (운영단계에서 할일인가? 아니다 여기 까지가 개발자가 할일이다. Immutable Image):
+- Correlation 테스트 내용 추가
 ```
-FROM python:2.7-slim
-WORKDIR /app
-ADD . /app
-RUN pip install --trusted-host pypi.python.org -r requirements.txt
-ENV NAME World
-EXPOSE 8090
-CMD ["python", "policy-handler.py"]
+(테스트 절차 및 결과)
 ```
-
 
 ## 동기식 호출 과 Fallback 처리
 
@@ -510,14 +396,26 @@ http localhost:8080/orders     # 모든 주문의 상태가 "배송됨"으로 �
 
 ## CI/CD 설정
 
-* (CI/CD 설정 내용 추가)
+* (CI/CD 내용 추가)
 ```
 (설정)
 ```
 
 - CI/CD 테스트 내용 추가
 ```
-(테스트)
+(테스트 절차 및 결과)
+```
+
+## Gateway
+
+* (Gateway 내용 추가)
+```
+(설정)
+```
+
+- Gateway 테스트 내용 추가
+```
+(테스트 절차 및 결과)
 ```
 
 ## 동기식 호출 / 서킷 브레이킹 / 장애격리
@@ -548,7 +446,7 @@ spec:
 
 - (동기식 호출/서킷브레이킹/장애격리 테스트 내용 추가 필요)
 ```
-(테스트)
+(테스트 절차 및 결과)
 ```
 
 ### 오토스케일 아웃
@@ -575,31 +473,46 @@ spec:
 
 - (오토스케일 아웃 테스트 내용 추가)
 ```
-(테스트)
+(테스트 절차 및 결과)
 ```
 
 ## 무정지 재배포
 
-* (무정지 재배포 설정 내용 추가)
+* (무정지 재배포 내용 추가)
 ```
 (설정)
 ```
 
 - (무정지 재배포 테스트 내용 추가)
 ```
-(테스트)
+(테스트 절차 및 결과)
 ```
 
 
 ## Self healing (Liveness Probe)
 
-* (self healing 설정 내용 추가)
+* (self healing 내용)
+
 ```
-(설정)
+## index.html 
+welcome, RENTAL
+
+## Dockerfile 
+FROM nginx
+COPY default.conf /etc/nginx/conf.d/default.conf  ## PORT 8080 으로 변경
+COPY index.html /usr/share/nginx/html/index.html  ## TEST HTML
+COPY index.html /usr/share/nginx/html/actuator/health  ## readinessProbe, livenessProbe 대응
+
+## 도커 빌드
+docker build -t 979050235289.dkr.ecr.ap-southeast-2.amazonaws.com/rental:latest .
+
+## 도커 푸쉬
+docker push 979050235289.dkr.ecr.ap-southeast-2.amazonaws.com/rental:latest
 ```
+
 * (self healing 테스트 내용 추가)
 ```
-(테스트)
+(테스트 절차 및 결과)
 ```
 
 
