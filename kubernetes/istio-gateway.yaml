@@ -26,8 +26,6 @@ spec:
   - match:
     - uri:
         prefix: /rentals
-    rewrite:
-      uri: /
     route:
     - destination:
         host: rental
@@ -36,8 +34,6 @@ spec:
   - match:
     - uri:
         prefix: /stores
-    rewrite:
-      uri: /
     route:
     - destination:
         host: store
@@ -46,8 +42,6 @@ spec:
   - match:
     - uri:
         prefix: /repairs
-    rewrite:
-      uri: /
     route:
     - destination:
         host: repair
@@ -56,8 +50,6 @@ spec:
   - match:
     - uri:
         prefix: /payments
-    rewrite:
-      uri: /
     route:
     - destination:
         host: payment
@@ -66,8 +58,6 @@ spec:
   - match:
     - uri:
         prefix: /toyLists
-    rewrite:
-      uri: /
     route:
     - destination:
         host: view
