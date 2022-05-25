@@ -9,22 +9,23 @@
 # 서비스 시나리오
 
 기능적 요구사항
-1. 고객이 장난감 대여 주문을 한다.
-1. 고객은 주문이후에 결제를 진행된다.
-1. 주문 결제가 완료되면 상점에 전달된다.
-1. 고객이 주문을 취소한다.
-1. 주문 취소와 동시에 결제가 취소된다.
-1. 주문 취소가 완료되면 상점에 전달된다.
-1. 고객은 장난감을 반납한다.
-1. 장난감을 반납하면 상점에 전달된다.
-1. 상점 주인은 재고를 등록할 수 있다.
-1. 상점 주인은 손상된 장난감을 수리 요청한다.
-1. 장난감 수리 요청은 수리기사에게 전달된다.
+1. 고객이 장난감 대여 주문을 한다. (ok)
+1. 고객은 주문이후에 결제를 진행된다. (ok)
+1. 주문 결제가 완료되면 상점에 전달된다. (ok)
+1. 상점주인은 대여 주문을 승인한다. (ok)
+1. 고객이 주문을 취소한다. (ok)
+1. 주문 취소와 동시에 결제가 취소된다. (ok)
+1. 주문 취소가 완료되면 상점에 전달된다. (ok) 
+1. 고객은 장난감을 반납한다. (ok)
+1. 장난감을 반납하면 상점에 전달된다. (ok)
+1. 상점 주인은 장난감의 재고 상태를 상시 조회한다.
+1. 상점 주인은 재고를 등록할 수 있다. (ok)
+1. 상점 주인은 손상된 장난감을 수리 요청한다. (ok)
+1. 상점 주인이 반납 확인을 하면 rental 대여 상태가 변경된다.
 1. 수리기사는 장난감을 수리한다.
 1. 수리된 장난감 정보를 상점에 전달한다.
 1. 수리기사는 장난감을 폐기한다.
 1. 폐기된 장난감 정보를 상점에 전달한다.
-1. 상점 주인은 장난감의 재고 상태를 상시 조회한다.
 
 비기능적 요구사항
 1. 트랜잭션
@@ -101,7 +102,7 @@
   ![image](https://user-images.githubusercontent.com/38757114/170179634-534f581a-dd40-496d-ab2f-5c1658a3cb50.png)
 
 ## TO-BE 조직 (Vertically-Aligned)
-  ![image](https://user-images.githubusercontent.com/38757114/170192290-f88d7d36-76e6-4abf-9879-5bad143d1661.png)
+  ![image](https://user-images.githubusercontent.com/38757114/170242318-89cc85d2-260c-426b-8152-57f464ac97a5.png)
 
 
 ## Event Storming 결과
@@ -118,16 +119,16 @@
         - 주문시>메뉴카테고리선택됨, 주문시>메뉴검색됨 :  UI 의 이벤트이지, 업무적인 의미의 이벤트가 아니라서 제외
 
 ### 액터, 커맨드 부착하여 읽기 좋게
-![image](https://user-images.githubusercontent.com/38757114/170241410-03dc63db-5966-48a3-baba-9dfa3c18c2c7.png)
+![image](https://user-images.githubusercontent.com/38757114/170247769-aaf5b1a4-a2ce-4749-822d-59316545be8a.png)
 
 ### 어그리게잇으로 묶기
-![image](https://user-images.githubusercontent.com/38757114/170241515-167c3ef0-d36b-4d12-a98d-1250c36c5549.png)
+![image](https://user-images.githubusercontent.com/38757114/170247909-0306932c-759c-4c4c-a908-6ffca90f9b78.png)
 
     - app의 Order, store 의 주문처리, 결제의 결제이력은 그와 연결된 command 와 event 들에 의하여 트랜잭션이 유지되어야 하는 단위로 그들 끼리 묶어줌
 
 ### 바운디드 컨텍스트로 묶기
 
-![image](https://user-images.githubusercontent.com/38757114/170241635-1a64b085-7a23-4e70-852d-7af139dfe078.png)
+![image](https://user-images.githubusercontent.com/38757114/170248007-2c86dd0d-fb2d-4b7c-bd39-d4180167a6cd.png)
 
     - 도메인 서열 분리 
         - Core Domain:  app(front), store : 없어서는 안될 핵심 서비스이며, 연견 Up-time SLA 수준을 99.999% 목표, 배포주기는 app 의 경우 1주일 1회 미만, store 의 경우 1개월 1회 미만
@@ -136,55 +137,67 @@
 
 ### 폴리시 부착 (괄호는 수행주체, 폴리시 부착을 둘째단계에서 해놔도 상관 없음. 전체 연계가 초기에 드러남)
 
-![image](https://user-images.githubusercontent.com/38757114/170241719-8f02104c-c711-4d44-8a07-89f4b90ecec3.png)
+![image](https://user-images.githubusercontent.com/38757114/170248122-5094f44f-fe8a-4fde-8800-8e29d88ee5b3.png)
 
 ### 폴리시의 이동과 컨텍스트 매핑 (점선은 Pub/Sub, 실선은 Req/Resp)
 
-![image](https://user-images.githubusercontent.com/38757114/170241805-5f20aa52-a951-4f5c-84a9-b3e946b801b7.png)
+![image](https://user-images.githubusercontent.com/38757114/170248193-d5e764ee-0ef4-48ba-b694-848c44110f7b.png)
 
 ### 완성된 1차 모형
 
-![image](https://user-images.githubusercontent.com/38757114/170241883-12be8a52-8f5b-4993-83cd-bb7c4c5e2ceb.png)
+![image](https://user-images.githubusercontent.com/38757114/170248397-8b9b95f5-5554-4a2c-8412-2ef513fcc595.png)
 
     - View Model 추가
 
 ### 1차 완성본에 대한 기능적/비기능적 요구사항을 커버하는지 검증
 
-![image](https://user-images.githubusercontent.com/487999/79684167-3ecd2f00-826a-11ea-806a-957362d197e3.png)
+![image](https://user-images.githubusercontent.com/38757114/170251183-72269cdd-41d6-4cdf-a3cc-b2f7b3f979dc.png)
 
-    - 고객이 메뉴를 선택하여 주문한다 (ok)
-    - 고객이 결제한다 (ok)
-    - 주문이 되면 주문 내역이 입점상점주인에게 전달된다 (ok)
-    - 상점주인이 확인하여 요리해서 배달 출발한다 (ok)
+    - 고객이 장난감 대여 주문을 한다. (ok)
+    - 고객은 주문이후에 결제를 진행된다. (ok)
+    - 주문 결제가 완료되면 상점에 전달된다. (ok)
+    - 상점주인은 대여 주문을 승인한다. (ok)
+    - 고객이 주문을 취소한다. (ok)
+    - 주문 취소와 동시에 결제가 취소된다. (ok)
+    - 주문 취소가 완료되면 상점에 전달된다. (ok) 
+    - 고객은 장난감을 반납한다. (ok)
+    - 장난감을 반납하면 상점에 전달된다. (ok)
+    - 상점 주인은 장난감의 재고 상태를 상시 조회한다.
 
-![image](https://user-images.githubusercontent.com/487999/79684170-47256a00-826a-11ea-9777-e16fafff519a.png)
-    - 고객이 주문을 취소할 수 있다 (ok)
-    - 주문이 취소되면 배달이 취소된다 (ok)
-    - 고객이 주문상태를 중간중간 조회한다 (View-green sticker 의 추가로 ok) 
-    - 주문상태가 바뀔 때 마다 카톡으로 알림을 보낸다 (?)
+![image](https://user-images.githubusercontent.com/38757114/170254408-d329f749-29a9-4fd0-92cd-246f07e961f8.png)
+
+    - 상점 주인은 재고를 등록할 수 있다. (ok)
+    - 상점 주인은 손상된 장난감을 수리 요청한다. (ok)
+    - 상점 주인이 반납 확인을 하면 rental 대여 상태가 변경된다.(?)
+
+![image](https://user-images.githubusercontent.com/38757114/170254646-895c53e0-98b8-4496-b629-fa4a626ff896.png)
+
+    - 수리기사는 장난감을 수리한다.
+    - 수리된 장난감 정보를 상점에 전달한다.
+    - 수리기사는 장난감을 폐기한다.
+    - 폐기된 장난감 정보를 상점에 전달한다.
 
 
 ### 모델 수정
 
-![image](https://user-images.githubusercontent.com/487999/79684176-4e4c7800-826a-11ea-8deb-b7b053e5d7c6.png)
+![image](https://user-images.githubusercontent.com/38757114/170254782-98cd28ba-915e-49b8-965e-b8e5c06a666e.png)
     
     - 수정된 모델은 모든 요구사항을 커버함...
 
 ### 비기능 요구사항에 대한 검증
 
-![image](https://user-images.githubusercontent.com/487999/79684184-5c9a9400-826a-11ea-8d87-2ed1e44f4562.png)
-
-    - 마이크로 서비스를 넘나드는 시나리오에 대한 트랜잭션 처리
-        - 고객 주문시 결제처리:  결제가 완료되지 않은 주문은 절대 받지 않는다는 경영자의 오랜 신념(?) 에 따라, ACID 트랜잭션 적용. 주문와료시 결제처리에 대해서는 Request-Response 방식 처리
-        - 결제 완료시 점주연결 및 배송처리:  App(front) 에서 Store 마이크로서비스로 주문요청이 전달되는 과정에 있어서 Store 마이크로 서비스가 별도의 배포주기를 가지기 때문에 Eventual Consistency 방식으로 트랜잭션 처리함.
-        - 나머지 모든 inter-microservice 트랜잭션: 주문상태, 배달상태 등 모든 이벤트에 대해 카톡을 처리하는 등, 데이터 일관성의 시점이 크리티컬하지 않은 모든 경우가 대부분이라 판단, Eventual Consistency 를 기본으로 채택함.
-
-
+    - 트랜잭션
+        - 결제가 되지 않은 주문건은 아예 거래가 성립되지 않아야 한다 (Sync 호출) (ok)
+    - 장애격리
+        - 상점관리 기능이 수행되지 않더라도 주문은 365일 24시간 받을 수 있어야 한다  Async (event-driven), Eventual Consistency (ok)
+        - 결제시스템이 과중되면 사용자를 잠시동안 받지 않고 결제를 잠시후에 하도록 유도한다  Circuit breaker, fallback (ok)
+    - 성능
+        - 상점주인은 장난감 상태를 Dashboard를 통해 확인할 수 있어야 한다  CQRS (ok)
 
 
 ## 헥사고날 아키텍처 다이어그램 도출
     
-![image](https://user-images.githubusercontent.com/487999/79684772-eba9ab00-826e-11ea-9405-17e2bf39ec76.png)
+![image](https://user-images.githubusercontent.com/38757114/170260653-876259e9-3224-4944-a658-09ccf1b39721.png)
 
 
     - Chris Richardson, MSA Patterns 참고하여 Inbound adaptor와 Outbound adaptor를 구분함
@@ -197,17 +210,17 @@
 분석/설계 단계에서 도출된 헥사고날 아키텍처에 따라, 각 BC별로 대변되는 마이크로 서비스들을 스프링부트와 파이선으로 구현하였다. 구현한 각 서비스를 로컬에서 실행하는 방법은 아래와 같다 (각자의 포트넘버는 8081 ~ 808n 이다)
 
 ```
-cd app
-mvn spring-boot:run
+    cd app
+    mvn spring-boot:run
 
-cd pay
-mvn spring-boot:run 
+    cd pay
+    mvn spring-boot:run 
 
-cd store
-mvn spring-boot:run  
+    cd store
+    mvn spring-boot:run  
 
-cd customer
-python policy-handler.py 
+    cd customer
+    python policy-handler.py 
 ```
 
 ## DDD 의 적용
