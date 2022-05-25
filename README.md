@@ -14,7 +14,7 @@
 1. 주문 결제가 완료되면 상점에 전달된다.
 1. 고객이 주문을 취소한다.
 1. 주문 취소와 동시에 결제가 취소된다.
-1. 주문 쉬소가 완료되면 상점에 전달된다.
+1. 주문 취소가 완료되면 상점에 전달된다.
 1. 고객은 인형을 반납한다.
 1. 인형을 반납하면 상점에 전달된다.
 1. 상점 주인은 재고를 등록할 수 있다.
@@ -98,21 +98,21 @@
 
 
 ## AS-IS 조직 (Horizontally-Aligned)
-  ![image](https://user-images.githubusercontent.com/487999/79684144-2a893200-826a-11ea-9a01-79927d3a0107.png)
+  ![image](https://user-images.githubusercontent.com/38757114/170179634-534f581a-dd40-496d-ab2f-5c1658a3cb50.png)
 
 ## TO-BE 조직 (Vertically-Aligned)
-  ![image](https://user-images.githubusercontent.com/487999/79684159-3543c700-826a-11ea-8d5f-a3fc0c4cad87.png)
+  ![image](https://user-images.githubusercontent.com/38757114/170182196-4fbddd64-fb81-4584-bb3c-e0d5b966418b.png)
 
 
 ## Event Storming 결과
-* MSAEz 로 모델링한 이벤트스토밍 결과:  http://msaez.io/#/storming/nZJ2QhwVc4NlVJPbtTkZ8x9jclF2/every/a77281d704710b0c2e6a823b6e6d973a/-M5AV2z--su_i4BfQfeF
+* MSAEz 로 모델링한 이벤트스토밍 결과:  https://labs.msaez.io/#/storming/3jGlydfghQMxDDNLKx6tC2Jw4jn2/c275e9a22f064522da75bc037464d589
 
 
 ### 이벤트 도출
-![image](https://user-images.githubusercontent.com/487999/79683604-47bc0180-8266-11ea-9212-7e88c9bf9911.png)
+![image](https://user-images.githubusercontent.com/38757114/170183697-ad9ef3ba-7143-4b68-91cd-5bc55d9778e8.png)
 
 ### 부적격 이벤트 탈락
-![image](https://user-images.githubusercontent.com/487999/79683612-4b4f8880-8266-11ea-9519-7e084524a462.png)
+![image](https://user-images.githubusercontent.com/38757114/170183853-d9883931-53ef-47fb-9b43-46ab5b561fd4.png)
 
     - 과정중 도출된 잘못된 도메인 이벤트들을 걸러내는 작업을 수행함
         - 주문시>메뉴카테고리선택됨, 주문시>메뉴검색됨 :  UI 의 이벤트이지, 업무적인 의미의 이벤트가 아니라서 제외
