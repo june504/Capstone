@@ -1,6 +1,6 @@
 ![image](https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F215%2F2022%2F02%2F19%2FA202202180315_1_20220219011801988.jpg&type=sc960_832)
 
-# 인형 렌탈(ToyRental)
+# 장남감 대여(ToyRental)
 
 본 예제는 MSA/DDD/Event Storming/EDA 를 포괄하는 분석/설계/구현/운영 전단계를 커버하도록 구성한 예제입니다.
 이는 클라우드 네이티브 애플리케이션의 개발에 요구되는 체크포인트들을 통과하기 위한 예시 답안을 포함합니다.
@@ -9,22 +9,22 @@
 # 서비스 시나리오
 
 기능적 요구사항
-1. 고객이 인형을 대여 주문을 한다.
+1. 고객이 장난감 대여 주문을 한다.
 1. 고객은 주문이후에 결제를 진행된다.
 1. 주문 결제가 완료되면 상점에 전달된다.
 1. 고객이 주문을 취소한다.
 1. 주문 취소와 동시에 결제가 취소된다.
 1. 주문 취소가 완료되면 상점에 전달된다.
-1. 고객은 인형을 반납한다.
-1. 인형을 반납하면 상점에 전달된다.
+1. 고객은 장난감을 반납한다.
+1. 장난감을 반납하면 상점에 전달된다.
 1. 상점 주인은 재고를 등록할 수 있다.
-1. 상점 주인은 손상된 인형을 수리 요청한다.
-1. 인형 수리 요청은 수리기사에게 전달된다.
-1. 수리기사는 인형을 수리한다.
-1. 수리된 인형 정보를 상점에 전달한다.
-1. 수리기사는 인형을 폐기한다.
-1. 폐기된 인형 정보를 상점에 전달한다.
-1. 상점 주인은 인형의 재고 상태를 상시 조회한다.
+1. 상점 주인은 손상된 장난감을 수리 요청한다.
+1. 장난감 수리 요청은 수리기사에게 전달된다.
+1. 수리기사는 장난감을 수리한다.
+1. 수리된 장난감 정보를 상점에 전달한다.
+1. 수리기사는 장난감을 폐기한다.
+1. 폐기된 장난감 정보를 상점에 전달한다.
+1. 상점 주인은 장난감의 재고 상태를 상시 조회한다.
 
 비기능적 요구사항
 1. 트랜잭션
@@ -33,7 +33,7 @@
     1. 상점관리 기능이 수행되지 않더라도 주문은 365일 24시간 받을 수 있어야 한다  Async (event-driven), Eventual Consistency
     1. 결제시스템이 과중되면 사용자를 잠시동안 받지 않고 결제를 잠시후에 하도록 유도한다  Circuit breaker, fallback
 1. 성능
-    1. 상점주인은 인형 상태를 Dashboard를 통해 확인할 수 있어야 한다  CQRS
+    1. 상점주인은 장난감 상태를 Dashboard를 통해 확인할 수 있어야 한다  CQRS
 
 
 # 체크포인트
@@ -109,25 +109,25 @@
 
 
 ### 이벤트 도출
-![image](https://user-images.githubusercontent.com/38757114/170183697-ad9ef3ba-7143-4b68-91cd-5bc55d9778e8.png)
+![image](https://user-images.githubusercontent.com/38757114/170240973-4b66e331-e3cf-46c2-be36-1eed891336d6.png)
 
 ### 부적격 이벤트 탈락
-![image](https://user-images.githubusercontent.com/38757114/170183853-d9883931-53ef-47fb-9b43-46ab5b561fd4.png)
+![image](https://user-images.githubusercontent.com/38757114/170241327-8a14f857-7d71-4f4e-933a-e5551a9b153d.png)
 
     - 과정중 도출된 잘못된 도메인 이벤트들을 걸러내는 작업을 수행함
         - 주문시>메뉴카테고리선택됨, 주문시>메뉴검색됨 :  UI 의 이벤트이지, 업무적인 의미의 이벤트가 아니라서 제외
 
 ### 액터, 커맨드 부착하여 읽기 좋게
-![image](https://user-images.githubusercontent.com/38757114/170195423-bb79358a-086c-492b-833a-f1ac17fc7798.png)
+![image](https://user-images.githubusercontent.com/38757114/170241410-03dc63db-5966-48a3-baba-9dfa3c18c2c7.png)
 
 ### 어그리게잇으로 묶기
-![image](https://user-images.githubusercontent.com/38757114/170196097-0d722c70-0ab8-4a6d-a112-00faaf9892bf.png)
+![image](https://user-images.githubusercontent.com/38757114/170241515-167c3ef0-d36b-4d12-a98d-1250c36c5549.png)
 
     - app의 Order, store 의 주문처리, 결제의 결제이력은 그와 연결된 command 와 event 들에 의하여 트랜잭션이 유지되어야 하는 단위로 그들 끼리 묶어줌
 
 ### 바운디드 컨텍스트로 묶기
 
-![image](https://user-images.githubusercontent.com/38757114/170198108-63136510-0a13-4276-9d7c-be01a4086f10.png)
+![image](https://user-images.githubusercontent.com/38757114/170241635-1a64b085-7a23-4e70-852d-7af139dfe078.png)
 
     - 도메인 서열 분리 
         - Core Domain:  app(front), store : 없어서는 안될 핵심 서비스이며, 연견 Up-time SLA 수준을 99.999% 목표, 배포주기는 app 의 경우 1주일 1회 미만, store 의 경우 1개월 1회 미만
@@ -136,15 +136,15 @@
 
 ### 폴리시 부착 (괄호는 수행주체, 폴리시 부착을 둘째단계에서 해놔도 상관 없음. 전체 연계가 초기에 드러남)
 
-![image](https://user-images.githubusercontent.com/38757114/170200526-3fdc078c-7f08-4246-b79c-fa176f9a01b0.png)
+![image](https://user-images.githubusercontent.com/38757114/170241719-8f02104c-c711-4d44-8a07-89f4b90ecec3.png)
 
 ### 폴리시의 이동과 컨텍스트 매핑 (점선은 Pub/Sub, 실선은 Req/Resp)
 
-![image](https://user-images.githubusercontent.com/38757114/170203600-9c87e6d5-34b5-4663-8b02-b84e88b03e68.png)
+![image](https://user-images.githubusercontent.com/38757114/170241805-5f20aa52-a951-4f5c-84a9-b3e946b801b7.png)
 
 ### 완성된 1차 모형
 
-![image](https://user-images.githubusercontent.com/38757114/170204418-6bdbd803-9ed0-4861-9daf-dd963c7789d9.png)
+![image](https://user-images.githubusercontent.com/38757114/170241883-12be8a52-8f5b-4993-83cd-bb7c4c5e2ceb.png)
 
     - View Model 추가
 
