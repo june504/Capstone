@@ -116,7 +116,7 @@
 ![image](https://user-images.githubusercontent.com/38757114/170241327-8a14f857-7d71-4f4e-933a-e5551a9b153d.png)
 
     - 과정중 도출된 잘못된 도메인 이벤트들을 걸러내는 작업을 수행함
-        - 주문시>메뉴카테고리선택됨, 주문시>메뉴검색됨 :  UI 의 이벤트이지, 업무적인 의미의 이벤트가 아니라서 제외
+        - Off-Line 매장에서 대여와 반납하는 서비스로 장난감 배달 이벤트는 제외
 
 ### 액터, 커맨드 부착하여 읽기 좋게
 ![image](https://user-images.githubusercontent.com/38757114/170247769-aaf5b1a4-a2ce-4749-822d-59316545be8a.png)
@@ -124,16 +124,16 @@
 ### 어그리게잇으로 묶기
 ![image](https://user-images.githubusercontent.com/38757114/170247909-0306932c-759c-4c4c-a908-6ffca90f9b78.png)
 
-    - app의 Order, store 의 주문처리, 결제의 결제이력은 그와 연결된 command 와 event 들에 의하여 트랜잭션이 유지되어야 하는 단위로 그들 끼리 묶어줌
+    - rental의 주문, store의 주문처리, repair의 처리 결과, payment 결제이력은 그와 연결된 command 와 event 들에 의하여 트랜잭션이 유지되어야 하는 단위로 그들 끼리 묶어줌
 
 ### 바운디드 컨텍스트로 묶기
 
 ![image](https://user-images.githubusercontent.com/38757114/170248007-2c86dd0d-fb2d-4b7c-bd39-d4180167a6cd.png)
 
     - 도메인 서열 분리 
-        - Core Domain:  app(front), store : 없어서는 안될 핵심 서비스이며, 연견 Up-time SLA 수준을 99.999% 목표, 배포주기는 app 의 경우 1주일 1회 미만, store 의 경우 1개월 1회 미만
-        - Supporting Domain:   marketing, customer : 경쟁력을 내기위한 서비스이며, SLA 수준은 연간 60% 이상 uptime 목표, 배포주기는 각 팀의 자율이나 표준 스프린트 주기가 1주일 이므로 1주일 1회 이상을 기준으로 함.
-        - General Domain:   pay : 결제서비스로 3rd Party 외부 서비스를 사용하는 것이 경쟁력이 높음 (핑크색으로 이후 전환할 예정)
+        - Core Domain (rental, store) : 없어서는 안될 핵심 서비스이며, 연견 Up-time SLA 수준을 99.999% 목표, 배포주기는 app 의 경우 1주일 1회 미만, store 의 경우 1개월 1회 미만
+        - Supporting Domain (repair) : 경쟁력을 내기위한 서비스이며, SLA 수준은 연간 60% 이상 uptime 목표, 배포주기는 각 팀의 자율이나 표준 스프린트 주기가 1주일 이므로 1주일 1회 이상을 기준으로 함.
+        - General Domain (payment) : 결제서비스로 3rd Party 외부 서비스를 사용하는 것이 경쟁력이 높음
 
 ### 폴리시 부착 (괄호는 수행주체, 폴리시 부착을 둘째단계에서 해놔도 상관 없음. 전체 연계가 초기에 드러남)
 
@@ -180,7 +180,7 @@
 
 ### 모델 수정
 
-![image](https://user-images.githubusercontent.com/38757114/170254782-98cd28ba-915e-49b8-965e-b8e5c06a666e.png)
+![image](https://user-images.githubusercontent.com/38757114/170369996-a8c0068d-2afa-4da7-b1e0-8d4436abb8be.png)
     
     - 수정된 모델은 모든 요구사항을 커버함...
 
