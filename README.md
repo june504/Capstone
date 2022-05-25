@@ -168,7 +168,7 @@
 
 ![image](https://user-images.githubusercontent.com/487999/79684176-4e4c7800-826a-11ea-8deb-b7b053e5d7c6.png)
     
-    - 수정된 모델은 모든 요구사항을 커버함.
+    - 수정된 모델은 모든 요구사항을 커버함...
 
 ### 비기능 요구사항에 대한 검증
 
