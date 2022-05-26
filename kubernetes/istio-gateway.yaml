@@ -31,6 +31,7 @@ spec:
         host: rental
         port:
           number: 8080
+    timeout: 2s
   - match:
     - uri:
         prefix: /stores
@@ -39,6 +40,7 @@ spec:
         host: store
         port:
           number: 8080
+    timeout: 2s
   - match:
     - uri:
         prefix: /repairs
@@ -47,6 +49,7 @@ spec:
         host: repair
         port:
           number: 8080
+    timeout: 2s
   - match:
     - uri:
         prefix: /payments
@@ -55,6 +58,7 @@ spec:
         host: payment
         port:
           number: 8080
+    timeout: 2s
   - match:
     - uri:
         prefix: /toyLists
@@ -63,3 +67,4 @@ spec:
         host: view
         port:
           number: 8080
+    timeout: 2s

@@ -34,7 +34,13 @@ public class Store  {
     
     private String toyStatus;
 
+    @PrePersist
+    public void validate(){
+        //repository().findByRentalId(getRentalId()).ifPresent(store -> {
+        //    throw new RuntimeException("PLEASE CHECK RENTALID");
+        //});
 
+    }    
     
     @PostPersist
     public void onPostPersist(){
@@ -44,7 +50,6 @@ public class Store  {
         registered.publishAfterCommit();
 
     }
-
 
     public static StoreRepository repository(){
         StoreRepository storeRepository = StoreApplication.applicationContext.getBean(StoreRepository.class);
@@ -60,30 +65,20 @@ public class Store  {
         */
         BeanUtils.copyProperties(this, repairRequested);
         repairRequested.publishAfterCommit();
-
     }
-    /*
+    
     public void accept(){
         setToyStatus("ACCEPTED");
         Accepted accepted = new Accepted();
         BeanUtils.copyProperties(this, accepted);
         accepted.publishAfterCommit();
-
-    }
-    */
+    }    
+    
     public void returnConfirm(){
-        setToyStatus("RETURNED");
+        setToyStatus("AVAILABLE");
         ReturnConfirmed returnConfirmed = new ReturnConfirmed();
         BeanUtils.copyProperties(this, returnConfirmed);
-
-        /*
-        Input Event Content
-        */
         returnConfirmed.publishAfterCommit();
-
-        
-
-
     }
 
     public static void rentalConfirm(Paid paid){
@@ -92,84 +87,61 @@ public class Store  {
             Optional<Store> optionalStore = repository().findByToyId(toyId);
             optionalStore.orElseThrow(()-> new Exception("No Entity Found"));
             Store store = optionalStore.get();
-       
-            Accepted accepted = new Accepted();
-            //BeanUtils.copyProperties(this, payCancelled);
+            /*
+            Accepted accepted = new Accepted();            
             accepted.setRentalId(paid.getRentalId());
             accepted.setToyRentalPrice(paid.getToyRentalPrice());
             accepted.setToyId(paid.getToyId());
             accepted.setToyStatus("ACCEPTED");
             
             accepted.publish();
-
+            */
             store.setRentalId(paid.getRentalId());
-            store.setToyStatus("ACCEPTED");
+            store.setToyStatus("RENTAL REQUESTED");
             repository().save(store);
 
         }catch(Exception e){
             throw new RuntimeException(e);
-        }
-        /*
-        repository().findById(paid.getToyId()).ifPresent(store ->{
-            store.accept();       
-            repository().save(store);   
-        });
-        */
-
-        // Store store = new Store();
-        // store.setToyStatus("NOT AVAILABLE");
-        // store.setRentalId(paid.getRentalId());        
-        // /*
-        // LOGIC GOES HERE
-        // */
-        // repository().save(store);
-
-
+        } 
     }
+
     public static void rentalCancel(PayCancelled payCancelled){
-        //setToyStatus("");
-        Store store = new Store();
-        store.setToyStatus("AVAILABLE");
-        
-        /*
-        LOGIC GOES HERE
-        */
-        repository().save(store);
+        try{
+            Integer rentalId = payCancelled.getRentalId();
+            Optional<Store> optionalStore = repository().findByRentalId(rentalId);
+            optionalStore.orElseThrow(()-> new Exception("No Entity Found"));
 
-
+            Store store = optionalStore.get();
+            store.setToyStatus("AVAILABLE");
+            repository().save(store);
+        }  catch (Exception e){
+            throw new RuntimeException(e);
+        }
     }
+
+    
     public static void toyReturn(ToyReturned toyReturned){
-
-        Store store = new Store();
-        store.setToyStatus("AVAILABLE");
-        //store.setRentalId("");
-        /*
-        LOGIC GOES HERE
-        */
-        repository().save(store);
-
-
+        Integer rentalId = toyReturned.getRentalId();
+        repository().findByRentalId(rentalId).ifPresent(store->{
+            //Store store = optionalStore.get();
+            store.setToyStatus("RETURNED");
+            repository().save(store);
+        });
     }
+
     public static void updateToyStatus(ToyRepaired toyRepaired){
-
-        Store store = new Store();
-        /*
-        LOGIC GOES HERE
-        */
-        // repository().save(store);
-
-
-    }
-    public static void updateToyStatus(Discarded discarded){
-
-        Store store = new Store();
-        /*
-        LOGIC GOES HERE
-        */
-        // repository().save(store);
-
-
+        Integer toyId = toyRepaired.getToyId();
+        repository().findByToyId(toyId).ifPresent(store->{            
+            store.setToyStatus(toyRepaired.getToyStatus());
+            repository().save(store);
+        });
     }
 
-
+    public static void updateToyStatus(Discarded discarded){   
+        Integer toyId = discarded.getToyId();
+        repository().findByToyId(toyId).ifPresent(store->{            
+            store.setToyStatus(discarded.getToyStatus());
+            repository().save(store);
+        });
+    }
 }

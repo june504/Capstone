@@ -12,7 +12,7 @@ public class RentalCancelled extends AbstractEvent {
     private Integer customerId;
     private Integer toyId;
     private String rentalStatus;
-
+ 
     public RentalCancelled(){
         super();
     }

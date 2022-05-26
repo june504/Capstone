@@ -12,17 +12,20 @@ mvn spring-boot:run
 카프카 이벤트 보기
 /usr/local/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic toyrental --from-beginning
 
+/usr/local/kafka/bin/kafka-console-consumer.sh  --bootstrap-server my-kafka:9092 --from-beginning --topic toyrental
+
 ## rental test
 ```
 0. 렌탈 조회
 http GET localhost:8081/rentals
 
 1. 렌탈 하기
-#pay서비스 req, res 
+1-1. pay서비스 req, res 
 http POST localhost:8081/rentals rentalStatus="rent" customerId=1 toyId=1 
 
-#pay서비스 호출 없이
-#안 됨 http POST localhost:8081/rentals/rent rentalStatus=="rent" toyId=="1" customerId=="1"
+1-2. 존재하지 않는 toyId 나 "AVAILABLE" 아닌 장난감으로 렌탈하려고 하면 
+      404 오류 뱉음
+http POST localhost:8081/rentals rentalStatus="rent" customerId=1 toyId=1111111111
 
 2. 렌탈 조회
 http GET localhost:8081/rentals/1
@@ -32,6 +35,14 @@ http PUT localhost:8081/rentals/1/return
 
 4. 취소
 http PUT localhost:8081/rentals/1/rentalcancel
+
+
+
+0. 페이 목록조회
+http GET localhost:8085/payments
+
+1. 페이 등록
+http POST localhost:8085/payments rentalId=1 toyRentalPrice=10000
 
 '''
 

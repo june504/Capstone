@@ -40,6 +40,7 @@ logging:
 api:
   path:
     payment: localhost:8085
+    store: localhost:8083
 
 server:
   port: 8081
@@ -72,4 +73,5 @@ spring:
 api:
   path:
     payment: payment:8080
+    store: store:8080
 

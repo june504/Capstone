@@ -4,7 +4,7 @@ import toyrental.infra.AbstractEvent;
 import lombok.Data;
 import java.util.Date;
 
-@Data
+@Data 
 public class Registered extends AbstractEvent {
 
     private Integer toyId;

@@ -42,11 +42,6 @@ public class Repair  {
     public void discard(){
         setToyStatus("DISCARDED");
         Discarded discarded = new Discarded();
-        System.out.println("DISCARDED !!! ");
-        
-        /*
-        Input Event Content
-        */
         BeanUtils.copyProperties(this, discarded);
         discarded.publishAfterCommit();
 
@@ -54,24 +49,17 @@ public class Repair  {
     public void repair(){
         setToyStatus("AVAILABLE"); 
         ToyRepaired toyRepaired = new ToyRepaired();     
-        System.out.println("REPAIRED !!! ");
         BeanUtils.copyProperties(this, toyRepaired);
         toyRepaired.publishAfterCommit();
 
     }
 
     public static void requestRepair(RepairRequested repairRequested){
-
         Repair repair = new Repair();        
         repair.setToyId(repairRequested.getToyId());
         repair.setToyStatus(repairRequested.getToyStatus());        
-        repair.setRepairmanId("홍길동");
-
+        repair.setRepairmanId("1132");
         repository().save(repair);
-        
-                
-
-
     }
 
 

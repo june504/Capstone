@@ -36,10 +36,7 @@ import javax.transaction.Transactional;
                         return store;
                         
                 }
-
         
-
-
         @RequestMapping(value = "/{toyId}/accept",
                 method = RequestMethod.PUT,
                 produces = "application/json;charset=UTF-8")
@@ -56,10 +53,7 @@ import javax.transaction.Transactional;
                         return store;
                         
                 }
-
         
-
-
         @RequestMapping(value = "/{toyId}/returnconfirm",
                 method = RequestMethod.PUT,
                 produces = "application/json;charset=UTF-8")

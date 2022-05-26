@@ -37,7 +37,7 @@ public class ToyListViewHandler {
 
 
         }catch (Exception e){
-            e.printStackTrace();
+            //e.printStackTrace();
         }
     }
 
@@ -62,7 +62,7 @@ public class ToyListViewHandler {
 
 
         }catch (Exception e){
-            e.printStackTrace();
+            //e.printStackTrace();
         }
     }
 
@@ -83,7 +83,7 @@ public class ToyListViewHandler {
 
 
         }catch (Exception e){
-            e.printStackTrace();
+            //e.printStackTrace();
         }
     }
 
@@ -106,7 +106,7 @@ public class ToyListViewHandler {
             toyListRepository.save(toyList);
 
         }catch (Exception e){
-            e.printStackTrace();
+           // e.printStackTrace();
         }
     }
 
@@ -127,7 +127,7 @@ public class ToyListViewHandler {
 
 
         }catch (Exception e){
-            e.printStackTrace();
+            //e.printStackTrace();
         }
     }
 
@@ -149,7 +149,7 @@ public class ToyListViewHandler {
 
 
         }catch (Exception e){
-            e.printStackTrace();
+            //e.printStackTrace();
         }
     }
 
@@ -177,7 +177,7 @@ public class ToyListViewHandler {
                  toyListRepository.save(toyList);
                 }
         }catch (Exception e){
-            e.printStackTrace();
+            //e.printStackTrace();
         }
     }
 
@@ -199,7 +199,7 @@ public class ToyListViewHandler {
                  toyListRepository.save(toyList);
                 }
         }catch (Exception e){
-            e.printStackTrace();
+            //e.printStackTrace();
         }
     }
 
@@ -219,7 +219,7 @@ public class ToyListViewHandler {
                  toyListRepository.save(toyList);
                 }
         }catch (Exception e){
-            e.printStackTrace();
+            //e.printStackTrace();
         }
     }
 

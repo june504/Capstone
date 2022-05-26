@@ -20,7 +20,7 @@ public class Payment  {
     @Id
     @GeneratedValue(strategy=GenerationType.AUTO)
     
-    
+
     private Integer payId;
     
     
@@ -33,7 +33,12 @@ public class Payment  {
     private Integer toyId;
     
     
-    private Integer toyRentalPrice = 10000;
+    private Integer toyRentalPrice;
+
+    @PrePersist
+    public void onPrePersist(){
+        this.payStatus = "paid";
+    }    
 
     @PostPersist
     public void onPostPersist(){
@@ -42,6 +47,7 @@ public class Payment  {
         paid.publishAfterCommit();
 
     }
+    
     @PostUpdate
     public void onPostUpdate(){
         
@@ -74,7 +80,7 @@ public class Payment  {
             payCancelled.setToyRentalPrice(payment.getToyRentalPrice());
             payCancelled.setRentalId(rentalCancelled.getRentalId());
             payCancelled.setPayStatus("cencel");
-            
+
             payCancelled.publish();
 
         }catch(Exception e){

@@ -12,4 +12,6 @@ public interface StoreRepository extends PagingAndSortingRepository<Store, Integ
 
     Optional<Store> findByToyId(Integer toyId);
 
+    Optional<Store> findByRentalId(Integer rentalId);
+
 }

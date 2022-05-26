@@ -32,13 +32,27 @@ public class PolicyHandler{
         
 
         // Sample Logic //
-        Rental.updateRentalStatus(event);
-        
-
-        
+        Rental.updateRentalStatus1(event);      
+     
 
     }
 
+   
+    @StreamListener(KafkaProcessor.INPUT)
+    public void wheneverReturnConfirmed_UpdateRentalStatus(@Payload ReturnConfirmed returnConfirmed){
+
+        if(!returnConfirmed.validate()) return;
+        ReturnConfirmed event = returnConfirmed;
+        System.out.println("\n\n##### listener UpdateRentalStatus : " + returnConfirmed.toJson() + "\n\n");
+
+
+        
+
+        // Sample Logic //
+        Rental.updateRentalStatus2(event);
+               
+
+    }
 
 }
 
