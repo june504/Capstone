@@ -84,6 +84,7 @@
   - API 게이트웨이
     - API GW를 통하여 마이크로 서비스들의 집입점을 통일할 수 있는가?
     - 게이트웨이와 인증서버(OAuth), JWT 토큰 인증을 통하여 마이크로서비스들을 보호할 수 있는가?
+    
 - 운영
   - SLA 준수
     - 셀프힐링: Liveness Probe 를 통하여 어떠한 서비스의 health 상태가 지속적으로 저하됨에 따라 어떠한 임계치에서 pod 가 재생되는 것을 증명할 수 있는가?
@@ -210,185 +211,350 @@
 분석/설계 단계에서 도출된 헥사고날 아키텍처에 따라, 각 BC별로 대변되는 마이크로 서비스들을 스프링부트와 파이선으로 구현하였다. 구현한 각 서비스를 로컬에서 실행하는 방법은 아래와 같다 (각자의 포트넘버는 8081 ~ 808n 이다)
 
 ```
-    cd app
+    cd store
     mvn spring-boot:run
 
-    cd pay
-    mvn spring-boot:run 
-
-    cd store
+    cd repair
     mvn spring-boot:run  
 
-    cd customer
-    python policy-handler.py 
+    cd rental
+    mvn spring-boot:run  
+    
+    cd payment
+    mvn spring-boot:run  
+    
+    cd view
+    mvn spring-boot:run 
+
 ```
+
+
+## SAGA
+
+5개의 마이크로 서비스간 통신에서 kafka를 활용해 이벤트 메세지를 Pub/Sub하는 방법으로 구현하였다.
+
+* ex) 장난감 상점에서 수리가 필요한 장난감이 있을 경우, RepairRequested 이벤트를 발생
+
+* Store.java
+```java
+    public void repairRequest(){
+        setToyStatus("UNDER_REPAIR");
+        RepairRequested repairRequested = new RepairRequested();
+        BeanUtils.copyProperties(this, repairRequested);
+        repairRequested.publishAfterCommit();
+    }
+
+```
+
+
+Kafka에는 아래와 같이 이벤트가 publish된 것을 확인할 수 있다.
+```
+{"eventType":"RepairRequested","timestamp":1653526587264,"toyId":3,"name":"타요버스","toyStatus":"UNDER_REPAIR"}
+```
+
+
 
 ## CQRS
 
-* (CQRS 내용 추가)
-```
-(설정)
+장난감의 실시간 상태와 렌탈,수리 아이디를 상점 관리자가 통합 조회할 수 있도록 CQRS로 구현하였다.
+
+store, repair, rental 3개의 마이크로 서비스를 통합 조회해 성능 이슈를 사전에 예방할 수 있다.
+
+![image1](https://user-images.githubusercontent.com/103399148/170413278-df17b29e-50f4-4be9-8aa9-5cb57d2ca400.png)
+
+
+1. store 마이크로서비스 예시) 장난감이 등록되면, Registred 이벤트를 수신하여 등록
+```java
+    @StreamListener(KafkaProcessor.INPUT)
+    public void whenRegistered_then_CREATE_1 (@Payload Registered registered) {
+        try {
+
+            if (!registered.validate()) return;
+           
+            ToyList toyList = new ToyList();
+
+            toyList.setToyId(registered.getToyId());
+            toyList.setName(registered.getName());
+            toyList.setToyRentalPrice(registered.getToyRentalPrice());
+            toyList.setToyStatus("AVAILABLE");
+ 
+            toyListRepository.save(toyList);
+
+        }catch (Exception e){
+           e.printStackTrace();
+        }
+    }
 ```
 
-- CQRS 테스트 내용 추가
-```
-(테스트 절차 및 결과)
+2. repair 마이크로서비스 예시) 수리불가로 폐기되는 경우, Discarded 이벤트를 수신하여 변경
+```java
+   @StreamListener(KafkaProcessor.INPUT)
+    public void whenDiscarded_then_UPDATE_2(@Payload Discarded toyRepaired) {
+        try {
+            if (!toyRepaired.validate()) return;
+            
+            Optional<ToyList> toyListOptional = toyListRepository.findById(toyRepaired.getToyId());
+
+            if( toyListOptional.isPresent()) {
+                 ToyList toyList = toyListOptional.get();
+         
+                 toyList.setToyStatus("DISCARDED");
+                
+                 toyListRepository.save(toyList);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
 ```
 
-## Correlation
+3. rental 마이크로서비스 예시) 장남감 대여 시, ToyRented 이벤트를 수신하여 변경
+```java
+    @StreamListener(KafkaProcessor.INPUT)
+    public void whenToyRented_then_DELETE_1(@Payload ToyRented event) {
+        try {
+            if (!event.validate()) return;
 
-* (Correlation 내용 추가)
+            Optional<ToyList> toyListOptional = toyListRepository.findById(event.getToyId());
+
+            if( toyListOptional.isPresent()) {
+
+								ToyList toyList = toyListOptional.get();
+    
+                toyList.setToyStatus("RENT REQUEST");
+                toyList.setRentalId(event.getRentalId());
+            
+                toyListRepository.save(toyList);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+```   
+
+
+- CQRS 테스트 내용
 ```
-(설정)
+장난감 생성
+http POST http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/stores name="앵그리버드 인형" toyRentalPrice=4000 toyStatus="AVAILABLE"
 ```
+![image2](https://user-images.githubusercontent.com/103399148/170416676-a307971c-be3d-4da6-b53b-b008f724841f.png)
+
+```
+CQRS에서 조회
+http http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/toyLists
+```
+![image3](https://user-images.githubusercontent.com/103399148/170416650-d0197ade-9300-4f89-9bf2-33b7cdedc51f.png)
+
+```
+장난감 렌트
+http POST http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/rentals rentalStatus="rent" customerId=1 toyId=11
+```
+![image4](https://user-images.githubusercontent.com/103399148/170416652-7c624f9b-a2c4-4586-906b-dc674f2546e0.png)
+
+```
+CQRS에서 조회
+http http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/toyLists
+```
+![image5](https://user-images.githubusercontent.com/103399148/170416653-5a3a9369-345a-4f04-af2f-390c18ca11f9.png)
+
+```
+장난감 폐기
+http PUT http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/repairs/8/discard
+```
+![image6](https://user-images.githubusercontent.com/103399148/170416656-82bcdf59-14e6-4ee2-9257-d5614150fda8.png)
+
+```
+CQRS에서 조회
+http http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/toyLists
+```
+![image7](https://user-images.githubusercontent.com/103399148/170416659-8bef6445-5874-452a-911e-292366d13327.png)
+
+
+
+## Correlation  
+ Kafka에 publish되어있는 이벤트를 각기 다른 microservice에서 받아 처리할 수 있도록 하였다.
+
+ ex) 고객이 장난감 대여취소를 했을 때 결제취소가 되고, 결제취소이벤트를 받아 대여취소가 진행된다.  
+
+- 대여취소 이벤트 발생
+```json
+{"eventType":"RentalCancelled","timestamp":1653531080684,"rentalId":2,"customerId":1,"toyId":2,"rentalStatus":"cancel"}
+```
+
+ * PolicyHandler.java (Payment)
+
+```java
+    @StreamListener(KafkaProcessor.INPUT)
+    public void wheneverRentalCancelled_PayCancel(@Payload RentalCancelled rentalCancelled){
+        if(!rentalCancelled.validate()) return;
+        RentalCancelled event = rentalCancelled;
+        System.out.println("\n\n##### listener PayCancel : " + rentalCancelled.toJson() + "\n\n");
+        Payment.payCancel(event);
+    }
+```  
+* Payment.java (Payment)
+```java
+    public static void payCancel(RentalCancelled rentalCancelled){
+        try{
+            Integer rentalId = rentalCancelled.getRentalId();
+            Optional<Payment> optionalRental = repository().findByRentalId(rentalId);
+            optionalRental.orElseThrow(()-> new Exception("No Entity Found"));
+            Payment payment = optionalRental.get();
+            // 상태를 저장한다.
+            payment.setPayStatus("cencel");
+            repository().save(payment);
+            
+            // 이벤트를 발생시킨다.
+            PayCancelled payCancelled = new PayCancelled();
+            payCancelled.setPayId(payment.getPayId());
+            payCancelled.setToyRentalPrice(payment.getToyRentalPrice());
+            payCancelled.setRentalId(rentalCancelled.getRentalId());
+            payCancelled.setPayStatus("cencel");
+
+            payCancelled.publish();
+
+        }catch(Exception e){
+            throw new RuntimeException(e);
+        }
+    }
+```
+- 결제취소 이벤트 발생
+```json
+{"eventType":"PayCancelled","timestamp":1653531080759,"payId":1,"rentalId":2,"payStatus":"cencel","toyRentalPrice":2000}
+```
+
+* PolicyHandler.java (Store)
+```java
+    @StreamListener(KafkaProcessor.INPUT)
+    public void wheneverPayCancelled_RentalCancel(@Payload PayCancelled payCancelled){
+        if(!payCancelled.validate()) return;
+        System.out.println("\n\n##### listener RentalCancel : " + payCancelled.toJson() + "\n\n");
+        PayCancelled event = payCancelled;
+        Store.rentalCancel(event);
+    }
+```
+
+* Store.java (Store)
+```java
+    public static void rentalCancel(PayCancelled payCancelled){
+        try{
+            Integer rentalId = payCancelled.getRentalId();
+            Optional<Store> optionalStore = repository().findByRentalId(rentalId);
+            optionalStore.orElseThrow(()-> new Exception("No Entity Found"));
+
+            Store store = optionalStore.get();
+            store.setToyStatus("AVAILABLE");
+            repository().save(store);
+        }  catch (Exception e){
+            throw new RuntimeException(e);
+        }
+    }
+```
+
+```json
+{
+      "rentalId" : null,
+      "name" : "팽이",
+      "toyRentalPrice" : 4000,
+      "toyStatus" : "AVAILABLE",
+      "_links" : {
+        "self" : {
+          "href" : "http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/stores/8"
+        },
+        "store" : {
+          "href" : "http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/stores/8"
+        },
+        "repairrequest" : {
+          "href" : "http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/stores/8/repairrequest"
+        },
+        "accept" : {
+          "href" : "http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/stores/8/accept"
+        },
+        "returnconfirm" : {
+          "href" : "http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/stores/8/returnconfirm"
+        }
+      }
+    }
+```
+
 
 - Correlation 테스트 내용 추가
 ```
-(테스트 절차 및 결과)
-```
+1. 장난감을 등록한다.
+http POST http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/stores name="피카츄 인형" toyRentalPrice=5000 toyStatus="AVAILABLE"
+http POST http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/stores name="라이츄 인형" toyRentalPrice=5000 toyStatus="AVAILABLE"
+http POST http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/stores name="타요버스 인형" toyRentalPrice=5000 toyStatus="AVAILABLE"
 
-## 동기식 호출 과 Fallback 처리
+2. 장난감을 대여신청한다.
+http POST http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/rentals rentalStatus="rent" customerId=1 toyId=1 
 
-분석단계에서의 조건 중 하나로 주문(app)->결제(pay) 간의 호출은 동기식 일관성을 유지하는 트랜잭션으로 처리하기로 하였다. 호출 프로토콜은 이미 앞서 Rest Repository 에 의해 노출되어있는 REST 서비스를 FeignClient 를 이용하여 호출하도록 한다. 
+3. 가게에서 대여확정한다.
+http PUT http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/stores/1/accept
 
-- 결제서비스를 호출하기 위하여 Stub과 (FeignClient) 를 이용하여 Service 대행 인터페이스 (Proxy) 를 구현 
+4. 장난감을 대여취소한다.
+http PUT http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/rentals/1/rentalcancel
 
-```
-# (app) 결제이력Service.java
-
-package fooddelivery.external;
-
-@FeignClient(name="pay", url="http://localhost:8082")//, fallback = 결제이력ServiceFallback.class)
-public interface 결제이력Service {
-
-    @RequestMapping(method= RequestMethod.POST, path="/결제이력s")
-    public void 결제(@RequestBody 결제이력 pay);
-
-}
-```
-
-- 주문을 받은 직후(@PostPersist) 결제를 요청하도록 처리
-```
-# Order.java (Entity)
-
-    @PostPersist
-    public void onPostPersist(){
-
-        fooddelivery.external.결제이력 pay = new fooddelivery.external.결제이력();
-        pay.setOrderId(getOrderId());
-        
-        Application.applicationContext.getBean(fooddelivery.external.결제이력Service.class)
-                .결제(pay);
-    }
-```
-
-- 동기식 호출에서는 호출 시간에 따른 타임 커플링이 발생하며, 결제 시스템이 장애가 나면 주문도 못받는다는 것을 확인:
-
+5. 대여취소가 반영됨을 확인한다.
+http GET http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/stores
 
 ```
-# 결제 (pay) 서비스를 잠시 내려놓음 (ctrl+c)
 
-#주문처리
-http localhost:8081/orders item=통닭 storeId=1   #Fail
-http localhost:8081/orders item=피자 storeId=2   #Fail
-
-#결제서비스 재기동
-cd 결제
-mvn spring-boot:run
-
-#주문처리
-http localhost:8081/orders item=통닭 storeId=1   #Success
-http localhost:8081/orders item=피자 storeId=2   #Success
-```
-
-- 또한 과도한 요청시에 서비스 장애가 도미노 처럼 벌어질 수 있다. (서킷브레이커, 폴백 처리는 운영단계에서 설명한다.)
-
-
-
-
-## 비동기식 호출 / 시간적 디커플링 / 장애격리 / 최종 (Eventual) 일관성 테스트
-
-
-결제가 이루어진 후에 상점시스템으로 이를 알려주는 행위는 동기식이 아니라 비 동기식으로 처리하여 상점 시스템의 처리를 위하여 결제주문이 블로킹 되지 않아도록 처리한다.
+## Request / Response
  
-- 이를 위하여 결제이력에 기록을 남긴 후에 곧바로 결제승인이 되었다는 도메인 이벤트를 카프카로 송출한다(Publish)
- 
+ 대여(toyRented) -> 결제(Pay) 간의 호출은 동기식 일관성을 유지하는 트랙잭션으로 처리하도록 구현했다.
+
+- 결제서비스(payment)를 호출하기 위해 Proxy를 구현
+```java
+	@FeignClient(name="payment", url="${api.path.payment}")
+	public interface PaymentService {
+      @RequestMapping(method= RequestMethod.POST, path="/payments")
+      public void pay(@RequestBody Payment payment);
+
+	}
 ```
-package fooddelivery;
 
-@Entity
-@Table(name="결제이력_table")
-public class 결제이력 {
+- 장난감 대여 직후 결제를 요청하도록 처리 
+```java
+		public void toyRental(){
+         
+			Payment payment = new Payment();
+			payment.setRentalId(this.rentalId);
+			payment.setToyId(this.toyId);
+			payment.setToyRentalPrice(this.toyRentalPrice);
 
- ...
-    @PrePersist
-    public void onPrePersist(){
-        결제승인됨 결제승인됨 = new 결제승인됨();
-        BeanUtils.copyProperties(this, 결제승인됨);
-        결제승인됨.publish();
+			PaymentService paymentService =  RentalApplication.applicationContext.
+			getBean(toyrental.external.PaymentService.class);
+			paymentService.pay(payment);   
+	}
+```
+
+- 결제 후 결제승인 되었다는 이벤트를 Publish한다.
+```java
+	@PostPersist
+    	public void onPostPersist(){
+        	Paid paid = new Paid();
+        	BeanUtils.copyProperties(this, paid);
+        	paid.publishAfterCommit();
+
     }
+```    
 
-}
-```
-- 상점 서비스에서는 결제승인 이벤트에 대해서 이를 수신하여 자신의 정책을 처리하도록 PolicyHandler 를 구현한다:
-
-```
-package fooddelivery;
-
-...
-
-@Service
-public class PolicyHandler{
-
+- 결제 완료 후 상점에서 결제완료 이벤트(Paid)를 수신받아 장난감 대여를 확인한다.
+```java
     @StreamListener(KafkaProcessor.INPUT)
-    public void whenever결제승인됨_주문정보받음(@Payload 결제승인됨 결제승인됨){
-
-        if(결제승인됨.isMe()){
-            System.out.println("##### listener 주문정보받음 : " + 결제승인됨.toJson());
-            // 주문 정보를 받았으니, 요리를 슬슬 시작해야지..
-            
-        }
+    public void wheneverPaid_RentalConfirm(@Payload Paid paid){
+        if(!paid.validate()) return;
+        Paid event = paid;
+        System.out.println("\n\n##### listener RentalConfirm : " + paid.toJson() + "\n\n");        // Sample Logic //
+        Store.rentalConfirm(event);
     }
-
-}
-
-```
-실제 구현을 하자면, 카톡 등으로 점주는 노티를 받고, 요리를 마친후, 주문 상태를 UI에 입력할테니, 우선 주문정보를 DB에 받아놓은 후, 이후 처리는 해당 Aggregate 내에서 하면 되겠다.:
-  
-```
-  @Autowired 주문관리Repository 주문관리Repository;
-  
-  @StreamListener(KafkaProcessor.INPUT)
-  public void whenever결제승인됨_주문정보받음(@Payload 결제승인됨 결제승인됨){
-
-      if(결제승인됨.isMe()){
-          카톡전송(" 주문이 왔어요! : " + 결제승인됨.toString(), 주문.getStoreId());
-
-          주문관리 주문 = new 주문관리();
-          주문.setId(결제승인됨.getOrderId());
-          주문관리Repository.save(주문);
-      }
-  }
-
 ```
 
-상점 시스템은 주문/결제와 완전히 분리되어있으며, 이벤트 수신에 따라 처리되기 때문에, 상점시스템이 유지보수로 인해 잠시 내려간 상태라도 주문을 받는데 문제가 없다:
+- Request / Response 테스트 내용 추가
 ```
-# 상점 서비스 (store) 를 잠시 내려놓음 (ctrl+c)
-
-#주문처리
-http localhost:8081/orders item=통닭 storeId=1   #Success
-http localhost:8081/orders item=피자 storeId=2   #Success
-
-#주문상태 확인
-http localhost:8080/orders     # 주문상태 안바뀜 확인
-
-#상점 서비스 기동
-cd 상점
-mvn spring-boot:run
-
-#주문상태 확인
-http localhost:8080/orders     # 모든 주문의 상태가 "배송됨"으로 확인
+장난감 대여
+http POST http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/rentals rentalStatus="rent" customerId=1 toyId=1 
 ```
 
 
@@ -471,7 +637,6 @@ spec:
     - [http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/repairs](http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/repairs)
     - [http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/payments](http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/payments)
     - [http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/toyLists](http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/toyLists)
-    
 
 
 ## CI/CD 설정
@@ -479,6 +644,7 @@ spec:
 - github
     - 소스 형상 관리 및 ArgoCD Deploy yaml 관리
     - repository 내에 서비스 별로 path 구성
+    - https://github.com/archilee/Capstone/
 ![Untitled](https://user-images.githubusercontent.com/16043281/170403328-fb3517f3-8b45-4800-905f-bcbc326c177c.png)
     
 
@@ -531,67 +697,303 @@ spec:
 앞서 CB 는 시스템을 안정되게 운영할 수 있게 해줬지만 사용자의 요청을 100% 받아들여주지 못했기 때문에 이에 대한 보완책으로 자동화된 확장 기능을 적용하고자 한다. 
 
 
-- rental 서비스에 대한 replica 를 동적으로 늘려주도록 HPA 를 설정한다. 설정은 CPU 사용량이 80프로를 넘어서면 replica 를 5개까지 늘려준다:
+- rental 서비스에 대한 replica 를 동적으로 늘려주도록 HPA 를 설정한다. 설정은 CPU 사용량이 80프로를 넘어서면 replica 를 3개까지 늘려준다.
+- metrics-server 설치 (EKS 기본 미설치, CPU 사용량 알 수 없음)
+```bash
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
 ```
-## rental-hpa.yaml
 
+- deployment - CPU request 설정 (200m)
+```yaml
+## 모든 deployment 에 적용
+## root@labs-195116231:/home/project/capstone-team/Capstone/store/kubernetes/deployment.yaml 
+
+      containers:
+        - name: store
+          image: 979050235289.dkr.ecr.ap-southeast-2.amazonaws.com/store:latest
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: "200m"
+```
+
+- autoscale (HPA) 리소스 생성 (min 1 - max 3)
+```yaml
 apiVersion: autoscaling/v1
 kind: HorizontalPodAutoscaler
 metadata:
-  name: rental  ## store, payment, repair, view
+  name: store   ## rental, payment, repair, view
 spec:
-  maxReplicas: 5
-  minReplicas: 2
+  maxReplicas: 3
+  minReplicas: 1
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: rental   ## store, payment, repair, view
+    name: store   ## rental, payment, repair, view
   targetCPUUtilizationPercentage: 80
 ```
 
-- (오토스케일 아웃 테스트 내용 추가)
+- HPA 확인
+```bash
+root@labs-195116231:/home/project/capstone-team/Capstone# k get hpa
+
+NAME      REFERENCE            TARGETS   MINPODS   MAXPODS   REPLICAS   AGE
+payment   Deployment/payment   2%/80%    1         3         1          20h
+rental    Deployment/rental    3%/80%    1         3         1          18h
+repair    Deployment/repair    2%/80%    1         3         1          20h
+store     Deployment/store     3%/80%    1         3         1          20h
+view      Deployment/view      3%/80%    1         3         1          20h
+
 ```
-(테스트 절차 및 결과)
+
+- Autoscale 테스트
+    - Istio Ingress 로 직접 테스트하려했으나 AWS ELB 의 surge queue 등의 보호 처리로 인해 정상적인 테스트 불가능하여 클러스터 내부에서 테스트 수행하는 것으로 변경
+
+```bash
+# kubectl create deploy siege --image=apexacme/siege-nginx
+# kubectl exec -it siege -- siege -c50 http://view:8080/toyLists
+Defaulting container name to siege.
+Use 'kubectl describe pod/siege -n default' to see all of the containers in this pod.
+** SIEGE 4.0.4
+** Preparing 50 concurrent users for battle.
+The server is now under siege...^C
+Lifting the server siege...
+Transactions:                  19894 hits
+Availability:                 100.00 %
+Elapsed time:                  55.86 secs
+Data transferred:              10.18 MB
+Response time:                  0.14 secs
+Transaction rate:             356.14 trans/sec
+Throughput:                     0.18 MB/sec
+Concurrency:                   49.58
+Successful transactions:       19894
+Failed transactions:               0
+Longest transaction:            4.55
+Shortest transaction:           0.00
+```
+
+    - 결과 - 정상적으로 POD 이 3개까지 늘어났다.
+```bash
+# k get hpa view -w
+NAME   REFERENCE         TARGETS   MINPODS   MAXPODS   REPLICAS   AGE
+view   Deployment/view   82%/80%   1         3         1          24h
+view   Deployment/view   656%/80%   1         3         1          24h
+view   Deployment/view   464%/80%   1         3         3          24h
+
+# k get po -l app=view
+NAME                    READY   STATUS    RESTARTS   AGE
+view-8487789c88-p9k5s   2/2     Running   0          127m
+view-8487789c88-r6ts2   2/2     Running   0          31s
+view-8487789c88-sxwq5   2/2     Running   0          31s
 ```
 
 ## 무정지 재배포
 
-* (무정지 재배포 내용 추가)
+- readinessProbe 설정
 ```
-(설정)
+      containers:
+					# ....
+          # 생략
+          # ....
+          readinessProbe:
+            httpGet:
+              path: '/actuator/health'
+              port: 8080
+            initialDelaySeconds: 10
+            timeoutSeconds: 2
+            periodSeconds: 5
+            failureThreshold: 10
+
 ```
 
-- (무정지 재배포 테스트 내용 추가)
+- 무정지 재배포와 셀프힐링 테스트를 위해 HPA 와 istio DR (destination rule),
+- ArgoCD auto-sync 를 제거
+```bash
+# k delete hpa view
+horizontalpodautoscaler.autoscaling "view" deleted
+
+# k delete dr dr-view
+destinationrule.networking.istio.io "dr-view" deleted
 ```
-(테스트 절차 및 결과)
+
+- 동일 이미지의 태그를 변경하여 push
+```bash
+root@labs-195116231:/home/project/capstone-team/Capstone/view# docker build -t 979050235289.dkr.ecr.ap-southeast-2.amazonaws.com/view:v1 .
+
+root@labs-195116231:/home/project/capstone-team/Capstone/view# docker push 979050235289.dkr.ecr.ap-southeast-2.amazonaws.com/view:v1
+```
+
+- siege 로 상태 모니터링
+```bash
+kubectl exec -it siege -- siege -c100 -t60S -r10 -v http://view:8080/toyLists
+```
+
+- deployment/view EDIT
+```bash
+# k edit deploy/view
+
+containers:
+        - name: view
+          image: 979050235289.dkr.ecr.ap-southeast-2.amazonaws.com/view:latest --> v1
+```
+
+- 결과 - POD 변경되었으나 100% Availability 확인
+```bash
+## POD 변경 됨
+# k get po -l app=view
+view-5488bfc7cd-bgnn2      2/2     Running       0          26s
+view-8487789c88-p9k5s      2/2     Terminating   0          152m
+
+## siege 결과
+HTTP/1.1 200     0.47 secs:     196 bytes ==> GET  /toyLists
+HTTP/1.1 200     0.31 secs:     196 bytes ==> GET  /toyLists
+HTTP/1.1 200     0.57 secs:     196 bytes ==> GET  /toyLists
+HTTP/1.1 200     0.64 secs:     196 bytes ==> GET  /toyLists
+
+Lifting the server siege...
+Transactions:                  16034 hits
+Availability:                 100.00 %
+Elapsed time:                  59.17 secs
+Data transferred:              12.13 MB
+Response time:                  0.20 secs
+Transaction rate:             270.98 trans/sec
+Throughput:                     0.20 MB/sec
+Concurrency:                   55.24
+Successful transactions:       16044
+Failed transactions:               0
+Longest transaction:            3.02
+Shortest transaction:           0.00
 ```
 
 
 ## Self healing (Liveness Probe)
 
-* (self healing 내용)
+- livenessProbe 설정
+```
+      containers:
+					# ....
+          # 생략
+          # ....
+          livenessProbe:
+            httpGet:
+              path: '/actuator/health'
+              port: 8080
+            initialDelaySeconds: 120
+            timeoutSeconds: 2
+            periodSeconds: 5
+            failureThreshold: 5
 
 ```
-## index.html 
-welcome, RENTAL
 
-## Dockerfile 
-FROM nginx
-COPY default.conf /etc/nginx/conf.d/default.conf  ## PORT 8080 으로 변경
-COPY index.html /usr/share/nginx/html/index.html  ## TEST HTML
-COPY index.html /usr/share/nginx/html/actuator/health  ## readinessProbe, livenessProbe 대응
+- 강제로 liveness probe 의 http check uri 를 수정하여 POD restart 확인
+- deployment/view EDIT - test 를 위해 threshold 와 internal 을 짧게 변경
 
-## 도커 빌드
-docker build -t 979050235289.dkr.ecr.ap-southeast-2.amazonaws.com/rental:latest .
+```yaml
+# k edit deploy/view
 
-## 도커 푸쉬
-docker push 979050235289.dkr.ecr.ap-southeast-2.amazonaws.com/rental:latest
+livenessProbe:
+          failureThreshold: 5 --> 1
+          httpGet:
+            path: /actuator/health  --> /actuator/sick  ## health check fail 강제 발생
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 120 --> 60
+          periodSeconds: 5 --> 2
+          successThreshold: 1
+          timeoutSeconds: 2
 ```
 
-* (self healing 테스트 내용 추가)
-```
-(테스트 절차 및 결과)
+- 결과 확인 - describe 로 failure 확인되고 pod 조회시  재기동을 반복함
+```bash
+# k describe deploy view
+... 생략 ....
+Liveness:     http-get http://:8080/actuator/sick delay=60s timeout=2s period=2s #success=1 #failure=1
+
+# k get po -l app=view -w
+NAME                    READY   STATUS        RESTARTS   AGE
+view-7f8857c48b-9twkj   2/2     Terminating   4          10m
+view-dcd94d79b-rbmnr    2/2     Running       0          27s
+view-7f8857c48b-9twkj   0/2     Terminating   4          10m
+view-7f8857c48b-9twkj   0/2     Terminating   4          10m
+view-7f8857c48b-9twkj   0/2     Terminating   4          10m
+view-dcd94d79b-rbmnr    1/2     Running       1          63s
+view-dcd94d79b-rbmnr    2/2     Running       1          80s
+view-dcd94d79b-rbmnr    1/2     Running       2          2m3s
+view-dcd94d79b-rbmnr    2/2     Running       2          2m20s
+view-dcd94d79b-rbmnr    1/2     Running       3          3m5s
 ```
 
+- 테스트 완료 후 복구
+    - ArgoCD auto-sync 활성화
 
+# 시연 시나리오
+1. 각 MicroService 확인
+http GET http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/stores
+http GET http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/rentals
+http GET http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/repairs
+http GET http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/payments
+
+
+2. 장난감 등록
+http POST http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/stores name="콩순이 인형" toyRentalPrice=2000 toyStatus="AVAILABLE"
+http POST http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/stores name="크롱 인형" toyRentalPrice=4000 toyStatus="AVAILABLE"
+http POST http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/stores name="루피 인형" toyRentalPrice=5000 toyStatus="AVAILABLE"
+http POST http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/stores name="피카츄 인형" toyRentalPrice=5000 toyStatus="AVAILABLE"
+http POST http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/stores name="라이츄 인형" toyRentalPrice=5000 toyStatus="AVAILABLE"
+http POST http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/stores name="타요버스 인형" toyRentalPrice=5000 toyStatus="AVAILABLE"
+
+	* CQRS 조회 (등록상태 확인가능)
+	http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/toyLists
+
+3. 장난감 대여
+3-1. 장난감 대여 요청(pay서비스 req, res)
+http POST http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/rentals rentalStatus="rent" customerId=1 toyId=1 
+http POST http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/rentals rentalStatus="rent" customerId=1 toyId=2
+
+	* CQRS 조회 (대여상태 확인가능)
+
+3-2. 존재하지 않는 toyId 나 "AVAILABLE" 아닌 장난감으로 렌탈하려고 하면 
+      404 오류 뱉음
+http POST http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/rentals rentalStatus="rent" customerId=1 toyId=1111111111
+
+3-3. 가게의 대여확정
+http PUT http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/stores/1/accept
+http PUT http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/stores/2/accept
+
+	* CQRS 조회 (대여확정 확인가능)
+
+3-4. 고객의 대여내역 확인
+http GET http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/rentals/1
+http GET http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/rentals/2
+
+4. 장난감 대여 취소
+http PUT http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/rentals/1/rentalcancel
+
+	* CQRS 조회 (대여취소 확인가능)
+	
+5. 장난감 반납
+http PUT http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/rentals/2/return
+
+	* CQRS 조회 (반납 확인가능)
+
+5.1 가게의 반납확인
+http PUT http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/stores/2/returnconfirm
+
+6. 장난감 수리요청
+http PUT http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/stores/3/repairrequest
+http PUT http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/stores/4/repairrequest
+http PUT http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/stores/5/repairrequest
+
+	* CQRS 조회 (수리요청 확인가능)
+
+6.1 장난감 수리
+http PUT http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/repairs/1/repair
+
+	* CQRS 조회 (수리완료 확인가능)
+	
+6.2. 장난감 폐기
+http PUT http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/repairs/2/discard
+
+	* CQRS 조회 (폐기 확인가능)
 
