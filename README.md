@@ -1,4 +1,4 @@
-![image](https://search.pstatic.net/common/?src=http%3A%2F%2Fimgnews.naver.net%2Fimage%2F215%2F2022%2F02%2F19%2FA202202180315_1_20220219011801988.jpg&type=sc960_832)
+![image](https://user-images.githubusercontent.com/38757114/170401995-ae4bc2d2-9444-4504-a733-9ae7528f64c6.png)
 
 # 장남감 대여(ToyRental)
 
