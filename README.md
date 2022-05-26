@@ -890,7 +890,7 @@ Shortest transaction:           0.00
 ```
 
 - 강제로 liveness probe 의 http check uri 를 수정하여 POD restart 확인
-- deployment/view EDIT - test 를 위해 threshold 와 internal 을 짧게 변경
+- deployment/view EDIT - test 를 위해 threshold 와 interval 을 짧게 변경
 
 ```yaml
 # k edit deploy/view
