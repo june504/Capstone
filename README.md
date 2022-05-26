@@ -637,6 +637,7 @@ spec:
     - [http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/repairs](http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/repairs)
     - [http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/payments](http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/payments)
     - [http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/toyLists](http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/toyLists)
+    - [http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/rental](http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/rental)
 
 
 ## CI/CD 설정
