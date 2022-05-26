@@ -506,36 +506,36 @@ http GET http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.a
 
 - 결제서비스(payment)를 호출하기 위해 Proxy를 구현
 ```java
-	@FeignClient(name="payment", url="${api.path.payment}")
-	public interface PaymentService {
-      @RequestMapping(method= RequestMethod.POST, path="/payments")
-      public void pay(@RequestBody Payment payment);
+    @FeignClient(name="payment", url="${api.path.payment}")
+    public interface PaymentService {
+        @RequestMapping(method= RequestMethod.POST, path="/payments")
+        public void pay(@RequestBody Payment payment);
 
-	}
+    }
 ```
 
 - 장난감 대여 직후 결제를 요청하도록 처리 
 ```java
-		public void toyRental(){
-         
-			Payment payment = new Payment();
-			payment.setRentalId(this.rentalId);
-			payment.setToyId(this.toyId);
-			payment.setToyRentalPrice(this.toyRentalPrice);
+    public void toyRental(){
+        
+        Payment payment = new Payment();
+	payment.setRentalId(this.rentalId);
+	payment.setToyId(this.toyId);
+	payment.setToyRentalPrice(this.toyRentalPrice);
 
-			PaymentService paymentService =  RentalApplication.applicationContext.
-			getBean(toyrental.external.PaymentService.class);
-			paymentService.pay(payment);   
-	}
+        PaymentService paymentService =  RentalApplication.applicationContext.
+	getBean(toyrental.external.PaymentService.class);
+	paymentService.pay(payment);   
+    }
 ```
 
 - 결제 후 결제승인 되었다는 이벤트를 Publish한다.
 ```java
-	@PostPersist
-    	public void onPostPersist(){
-        	Paid paid = new Paid();
-        	BeanUtils.copyProperties(this, paid);
-        	paid.publishAfterCommit();
+    @PostPersist
+    public void onPostPersist(){
+        Paid paid = new Paid();
+        BeanUtils.copyProperties(this, paid);
+        paid.publishAfterCommit();
 
     }
 ```    
