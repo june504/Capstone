@@ -776,9 +776,8 @@ Failed transactions:               0
 Longest transaction:            4.55
 Shortest transaction:           0.00
 ```
+- 결과 - 정상적으로 POD 이 3개까지 늘어났다.
 
-    - 결과 - 정상적으로 POD 이 3개까지 늘어났다.
-    
 ```bash
 # k get hpa view -w
 NAME   REFERENCE         TARGETS   MINPODS   MAXPODS   REPLICAS   AGE
