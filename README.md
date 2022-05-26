@@ -797,7 +797,7 @@ view-8487789c88-sxwq5   2/2     Running   0          31s
 - readinessProbe 설정
 ```
       containers:
-					# ....
+	  # ....
           # 생략
           # ....
           readinessProbe:
@@ -837,7 +837,7 @@ kubectl exec -it siege -- siege -c100 -t60S -r10 -v http://view:8080/toyLists
 ```bash
 # k edit deploy/view
 
-containers:
+        containers:
         - name: view
           image: 979050235289.dkr.ecr.ap-southeast-2.amazonaws.com/view:latest --> v1
 ```
@@ -875,7 +875,7 @@ Shortest transaction:           0.00
 
 - livenessProbe 설정
 ```
-      containers:
+       containers:
 					# ....
           # 생략
           # ....
@@ -896,7 +896,7 @@ Shortest transaction:           0.00
 ```yaml
 # k edit deploy/view
 
-livenessProbe:
+        livenessProbe:
           failureThreshold: 5 --> 1
           httpGet:
             path: /actuator/health  --> /actuator/sick  ## health check fail 강제 발생
@@ -933,71 +933,86 @@ view-dcd94d79b-rbmnr    1/2     Running       3          3m5s
 
 # 시연 시나리오
 1. 각 MicroService 확인
+```bash
 http GET http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/stores
 http GET http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/rentals
 http GET http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/repairs
 http GET http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/payments
-
+```
 
 2. 장난감 등록
+```bash
 http POST http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/stores name="콩순이 인형" toyRentalPrice=2000 toyStatus="AVAILABLE"
 http POST http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/stores name="크롱 인형" toyRentalPrice=4000 toyStatus="AVAILABLE"
 http POST http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/stores name="루피 인형" toyRentalPrice=5000 toyStatus="AVAILABLE"
 http POST http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/stores name="피카츄 인형" toyRentalPrice=5000 toyStatus="AVAILABLE"
 http POST http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/stores name="라이츄 인형" toyRentalPrice=5000 toyStatus="AVAILABLE"
 http POST http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/stores name="타요버스 인형" toyRentalPrice=5000 toyStatus="AVAILABLE"
-
+```
 	* CQRS 조회 (등록상태 확인가능)
 	http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/toyLists
 
 3. 장난감 대여
 3-1. 장난감 대여 요청(pay서비스 req, res)
+```bash
 http POST http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/rentals rentalStatus="rent" customerId=1 toyId=1 
 http POST http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/rentals rentalStatus="rent" customerId=1 toyId=2
-
+```
 	* CQRS 조회 (대여상태 확인가능)
 
 3-2. 존재하지 않는 toyId 나 "AVAILABLE" 아닌 장난감으로 렌탈하려고 하면 
       404 오류 뱉음
+```bash
 http POST http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/rentals rentalStatus="rent" customerId=1 toyId=1111111111
+```
 
 3-3. 가게의 대여확정
+```bash
 http PUT http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/stores/1/accept
 http PUT http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/stores/2/accept
-
+```
 	* CQRS 조회 (대여확정 확인가능)
 
 3-4. 고객의 대여내역 확인
+```bash
 http GET http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/rentals/1
 http GET http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/rentals/2
+```
 
 4. 장난감 대여 취소
+```bash
 http PUT http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/rentals/1/rentalcancel
-
+```
 	* CQRS 조회 (대여취소 확인가능)
 	
 5. 장난감 반납
+```bash
 http PUT http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/rentals/2/return
-
+```
 	* CQRS 조회 (반납 확인가능)
 
 5.1 가게의 반납확인
+```bash
 http PUT http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/stores/2/returnconfirm
+```
 
 6. 장난감 수리요청
+```bash
 http PUT http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/stores/3/repairrequest
 http PUT http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/stores/4/repairrequest
 http PUT http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/stores/5/repairrequest
-
+```
 	* CQRS 조회 (수리요청 확인가능)
 
 6.1 장난감 수리
+```bash
 http PUT http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/repairs/1/repair
-
+```
 	* CQRS 조회 (수리완료 확인가능)
 	
 6.2. 장난감 폐기
+```bash
 http PUT http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/repairs/2/discard
-
+```
 	* CQRS 조회 (폐기 확인가능)
 
