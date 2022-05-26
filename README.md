@@ -394,29 +394,108 @@ http localhost:8080/orders     # 모든 주문의 상태가 "배송됨"으로 �
 
 # 운영
 
+## Istio Ingress Gateway 를 통한 진입점 통일
+- istio Circuit breaker 를 사용하기로 결정하여 gateway 도 istio ingress 를 사용
+- default namespace 에 **istio-injection=enabled** 설정 후 다음과 같이 virtual service 구성
+
+```yaml
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: toyrental-gateway
+spec:
+  selector:
+    istio: ingressgateway # use istio default controller
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "*"
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: toyrental-gateway
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - toyrental-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /rentals
+    route:
+    - destination:
+        host: rental
+        port:
+          number: 8080
+  - match:
+    - uri:
+        prefix: /stores
+    route:
+    - destination:
+        host: store
+        port:
+          number: 8080
+  - match:
+    - uri:
+        prefix: /repairs
+    route:
+    - destination:
+        host: repair
+        port:
+          number: 8080
+  - match:
+    - uri:
+        prefix: /payments
+    route:
+    - destination:
+        host: payment
+        port:
+          number: 8080
+  - match:
+    - uri:
+        prefix: /toyLists
+    route:
+    - destination:
+        host: view
+        port:
+          number: 8080
+```
+
+- istio-ingressgateway SVC ELB DNS 확인 후 서비스 정상 접근 확인 완료
+    - [http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/stores](http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/stores)
+    - [http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/repairs](http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/repairs)
+    - [http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/payments](http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/payments)
+    - [http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/toyLists](http://a51ce9ed0e17049e995a7719fed18a95-1021919797.ap-southeast-2.elb.amazonaws.com/toyLists)
+    
+
+
 ## CI/CD 설정
 
-* (CI/CD 내용 추가)
-```
-(설정)
-```
+- github
+    - 소스 형상 관리 및 ArgoCD Deploy yaml 관리
+    - repository 내에 서비스 별로 path 구성
+![Untitled](https://user-images.githubusercontent.com/16043281/170403328-fb3517f3-8b45-4800-905f-bcbc326c177c.png)
+    
 
-- CI/CD 테스트 내용 추가
-```
-(테스트 절차 및 결과)
-```
+- ECR
+    - Container Image Registry - EKS 와 동일 region 에 각 서비스 별로 repository 구성
+![Untitled 1](https://user-images.githubusercontent.com/16043281/170403228-1172dc84-f639-420f-a26f-b963a446f657.png)
 
-## Gateway
+- ArgoCD
+    - 서비스 별로 app 구성
+![Untitled 2](https://user-images.githubusercontent.com/16043281/170403252-4aa09516-a736-42cb-b1f2-b6891d9ba59f.png)
 
-* (Gateway 내용 추가)
-```
-(설정)
-```
+    - github path 별로 yaml 파일 sync
+    - 개발 사항 변경에 대한 빠른 재배포를 위해 auto-sync - self heal 구성
+    - docker build → docker push → deployment 삭제 → 자동 재배포
+![Untitled 3](https://user-images.githubusercontent.com/16043281/170403290-2cdd9c7f-312e-46c0-8194-93519299078b.png)
 
-- Gateway 테스트 내용 추가
-```
-(테스트 절차 및 결과)
-```
+
 
 ## 동기식 호출 / 서킷 브레이킹 / 장애격리
 
@@ -425,15 +504,13 @@ http localhost:8080/orders     # 모든 주문의 상태가 "배송됨"으로 �
 시나리오는 store-->payment 연결을 RESTful Request/Response 로 연동하여 구현이 되어있고, 결제 요청이 과도할 경우 CB 를 통하여 장애격리.
 
 - Istio(Circuit Breaker) 설정:  1번이라도 서버 오류가 발생 시 CB 회로가 닫히도록 (요청을 빠르게 실패처리, 차단) 설정
-```
-## /home/project/capstone-team/Capstone/rental[store, repair, payment, view]/kubernetes/cb.yaml 
-
+```yaml
 apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
 metadata:
-  name: dr-rental   ## dr-store, dr-repair, dr-payment, dr-view 동일
+  name: dr-store   ## dr-rental, dr-repair, dr-payment, dr-view 동일
 spec:
-  host: rental   ## store, repair, payment, view 동일
+  host: store   ## store, repair, payment, view 동일
   trafficPolicy:
     loadBalancer:
       simple: ROUND_ROBIN
@@ -443,6 +520,7 @@ spec:
       baseEjectionTime: 3m  ## 3분동안 라우팅에서 제외
       maxEjectionPercent: 100  ## 모든 컨테이너가 제외될 수 있음
 ```
+
 
 - (동기식 호출/서킷브레이킹/장애격리 테스트 내용 추가 필요)
 ```
