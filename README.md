@@ -694,8 +694,7 @@ kubectl exec -it siege -- siege -c50 -t60S -v --content-type "application/json" 
 ```
 
 - 결과 확인 - kiali 에서 'Has Circuit Breaker' 배지 확인 완료
-![image](https://user-images.githubusercontent.com/16043281/170430325-db5c7dcb-73ba-45da-b123-258f68404419.png)
-
+<img src = "https://user-images.githubusercontent.com/16043281/170430325-db5c7dcb-73ba-45da-b123-258f68404419.png" width="80%" height="80%">
 
 ## 오토스케일 아웃
 앞서 CB 는 시스템을 안정되게 운영할 수 있게 해줬지만 사용자의 요청을 100% 받아들여주지 못했기 때문에 이에 대한 보완책으로 자동화된 확장 기능을 적용하고자 한다. 
