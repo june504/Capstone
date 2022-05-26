@@ -677,7 +677,7 @@ kind: DestinationRule
 metadata:
   name: dr-store   ## dr-rental, dr-repair, dr-payment, dr-view 동일
 spec:
-  host: store   ## store, repair, payment, view 동일
+  host: store   ## rental, repair, payment, view 동일
   trafficPolicy:
     loadBalancer:
       simple: ROUND_ROBIN
@@ -756,7 +756,7 @@ view      Deployment/view      3%/80%    1         3         1          20h
 
 ```bash
 # kubectl create deploy siege --image=apexacme/siege-nginx
-# kubectl exec -it siege -- siege -c50 http://view:8080/toyLists
+# kubectl exec -it siege-[pod-id] -- siege -c50 http://view:8080/toyLists
 Defaulting container name to siege.
 Use 'kubectl describe pod/siege -n default' to see all of the containers in this pod.
 ** SIEGE 4.0.4
@@ -778,6 +778,7 @@ Shortest transaction:           0.00
 ```
 
     - 결과 - 정상적으로 POD 이 3개까지 늘어났다.
+    
 ```bash
 # k get hpa view -w
 NAME   REFERENCE         TARGETS   MINPODS   MAXPODS   REPLICAS   AGE
